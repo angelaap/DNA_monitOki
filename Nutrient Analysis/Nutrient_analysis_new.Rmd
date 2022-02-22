@@ -1,0 +1,398 @@
+---
+title: "Nutrient analysis_RSproject"
+author: "Angela Ares"
+date: '`r format(Sys.Date(), "%b %d, %Y")`'
+output:
+  html_document:
+    toc: true
+    theme: cosmo
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE)
+```
+
+Loading packages
+```{r packages, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(jcolors)
+library(ggfortify)
+```
+
+## Getting data and cleaning
+
+Data from the nutrient analyser are in 4 different .txt files. Each one have a different number of samples measured (i.e. rows) and run 2 had an issue with NH4 measurement which needed to be repeated. Hence,some of the steps needs to be done independently
+
+```{r getting data and cleaning}
+files <- list.files(path="~/Documents/Trabajo/Red Soil/DNA year monitoring project/Nutrient analysis/", pattern="*.txt", full.names=TRUE, recursive=FALSE)
+datalist <- lapply(files, function(x)read.table(x, header=FALSE, fill = TRUE, stringsAsFactors = FALSE, skip = 7))
+
+#add colnames to all the files
+datacol<-lapply(datalist, "colnames<-", paste0(c("Pk", "Type", "Cl.","CLP", "Group", "group2", "Digit", "Conc", "mAU", "Start", "Pos", "R", "A", "Weight", "Dilution")))
+
+#we keep only the rows corresponding to samples (i.e. "S")
+onlysamples<- lapply(datacol,function(x) x[x[,grep("Type",names(x))]=="S",])
+
+#only keep columns with concentration and ID number
+
+onlyconc<- lapply(onlysamples, function(x) x[(names(x) %in% c("Pk", "Conc"))])
+
+#since different dataframes from the list have different sample number we need to treat them independently
+set1<- onlyconc[[1]]
+#set2<- onlyconc[[2]]
+set3<- onlyconc[[3]]
+set4<- onlyconc[[4]]
+set5<- onlyconc[[5]]
+
+head(set1)
+```
+
+set 2 has a different structure so we need to treat it differently
+```{r}
+read2<- read.csv("~/Documents/Trabajo/Red Soil/DNA year monitoring project/Nutrient analysis/second run issue/2new.csv", sep=";", stringsAsFactors = FALSE)
+
+colnames(read2)<- c("Pk", "Type", "Cl.","CLP", "Group", "group2", "Digit", "Conc", "mAU", "Start", "Pos", "R", "A", "Weight", "Dilution")
+#let´s keep only the sample data
+set2<- read2 %>% 
+    filter(Type=="S")%>%
+    select(Pk, Conc)
+set2$Conc<- as.numeric(set2$Conc)
+set2$Pk<- as.numeric(set2$Pk)
+```
+
+## Data preparation and sample annotation
+
+Nutrient names are added to the different files (still in a independent way due the difference of rows), and also linked sample names are annotated from another .csv file. Files are all rbind together and the rows corresponding to "uncorrected" concentrations are removed from the dataset.
+
+```{r data preparation and sample annotation}
+#it is needed to modify each set independently because each has a different number of rows 
+#next step is to add the name of the element being analised, this is file dependent so it needs to be done file by file
+nutrient_set1<- rep(c("Uncorrected_TotalN","Uncorrected_NH4","Uncorrected_NO2","Uncorrected_PO4", "Uncorrected_SiO2","TotalN","NH4ppm","NO2ppm","PO4ppm", "SiO2ppm"),times=c(120, 120, 120, 120, 120, 120, 120, 120, 120, 120))
+#add the new column to the set1 dataframe
+set1_nut<-set1 %>%
+    mutate(nutrient = nutrient_set1)
+
+#En este caso, por culpa de la repeticion de NH4 en el run2 hay 9 canales en total
+nutrient_set2<- rep(c("Uncorrected_TotalN","Uncorrected_NO2","Uncorrected_PO4", "Uncorrected_SiO2","TotalN","NH4ppm","NO2ppm","PO4ppm", "SiO2ppm" ),times=c(120, 120, 120, 120, 120, 120, 120, 120, 120))
+set2_nut<-set2 %>%
+    mutate(nutrient = nutrient_set2)
+
+
+#In the set3 there was an issue with the measurement so only up to sample 170 is ok, other than that needs to be removed
+#first we need to filtrate by number, to keep only numbers lower than 170
+set3$Pk<- as.numeric(set3$Pk)
+set3_clean<- set3%>% filter (Pk<=170)
+nutrient_set3<- rep(c("Uncorrected_TotalN","Uncorrected_NH4","Uncorrected_NO2","Uncorrected_PO4", "Uncorrected_SiO2","TotalN","NH4ppm","NO2ppm","PO4ppm", "SiO2ppm"),times=c(160, 160, 160, 160, 160, 160, 160, 160, 160, 160))
+set3_nut<-set3_clean %>%
+    mutate(nutrient = nutrient_set3)
+
+#set4 has 240 samples
+set4$Pk<- as.numeric(set4$Pk)
+nutrient_set4<- rep(c("Uncorrected_TotalN","Uncorrected_NH4","Uncorrected_NO2","Uncorrected_PO4", "Uncorrected_SiO2","TotalN","NH4ppm","NO2ppm","PO4ppm", "SiO2ppm"),times=c(240, 240, 240, 240, 240, 240, 240, 240, 240, 240))
+set4_nut<-set4 %>%
+    mutate(nutrient = nutrient_set4)%>%
+    filter (Pk<=234)
+
+#add the names of the samples and other information to the clean set files. First set the working directory
+setwd("~/Documents/Trabajo/Red Soil/DNA year monitoring project/Nutrient analysis/")
+
+set1_samples<- read.csv("set1_names.csv", sep=";" )
+set1_nut$Pk<- as.integer(set1_nut$Pk)
+set1_total<- set1_nut %>%
+    left_join(set1_samples, by=c("Pk"="autosampler.id"))
+
+set2_samples<- read.csv("set2_names.csv", sep=";" )
+set2_nut$Pk<- as.integer(set2_nut$Pk)
+set2_total<- set2_nut %>%
+    full_join(set2_samples, by=c("Pk"="autosampler.id"))
+
+set3_samples<- read.csv("set3_names.csv", sep=";" )
+set3_nut$Pk<- as.integer(set3_nut$Pk)
+set3_total<- set3_nut %>%
+    left_join(set3_samples, by=c("Pk"="autosampler.id"))
+
+set4_samples<- read.csv("set4_names.csv", sep=";" )
+set4_nut$Pk<- as.integer(set4_nut$Pk)
+set4_total<- set4_nut %>%
+    left_join(set4_samples, by=c("Pk"="autosampler.id"))
+
+#join all the sets with rbind
+all_data<- rbind(set1_total, set2_total, set3_total, set4_total)
+    
+#delete Uncorrected ones
+totalfiltered<- all_data %>% 
+    filter(!grepl('Uncorrected', nutrient))
+
+#set date column as dates
+totalfiltered$dates <- as.Date(totalfiltered$dates , format = "%d/%m/%y")
+
+head(totalfiltered, n=10)
+str(totalfiltered)
+dim(totalfiltered)
+
+```
+
+### NO3 concentration
+NO3 concentration is simply calculated by substrating the NO2 to NO3+NO2
+
+```{r calculate concentration in mM}
+#calculation of NO3, first make the table wider with spread function from tidyr package
+NO3<- totalfiltered %>% spread(key = nutrient, value = Conc) %>%
+    mutate(NO3ppm= TotalN - NO2ppm)
+
+head(NO3)
+```
+
+### Change ppm to molarity
+
+Nutrient concentration needs to be expressed in µM. To make this we need to multiply the concentration by the seawater density (1.03g/ml) and divide by the molecular weight of the nutrient we are calculating plus taking into consideration the conversion calculation (all the 000).
+Also, additional information regarding the landuse, area, and position in each area area added to the dataset so it can be a more complete dataset.
+
+
+```{r molarity}
+microM <- 
+    NO3 %>% 
+    mutate(NO3 = (NO3ppm*1.03*1000*1000)/(1000000*62.0049),
+           NO2 = (NO2ppm*1.03*1000*1000)/(1000000*46.0055),
+           NH4 = (NH4ppm*1.03*1000*1000)/(1000000*18.04),
+           PO4 = (PO4ppm*1.03*1000*1000)/(1000000*94.9714),
+           SiO2 = (SiO2ppm*1.03*1000*1000)/(1000000*60.08))%>% 
+    select(-c(NH4ppm, NO2ppm, PO4ppm, SiO2ppm, TotalN, NO3ppm))#drop the columns we dont need anymore
+#substitute negative values by 0
+microM[microM < 0] <- 0 
+
+microMcomplete <- na.omit(microM) 
+
+#add the landuse type and area vectors
+landuse<- rep(c("U", "R"), each=6, times=52)
+area<- rep(c("U1", "R1", "U2", "R2"), each=6, times=26)
+sitepos<- rep(c("S","C","N"), each=2, times=104)
+
+#paste these vectors to the totalfiltered df
+microMtotal<- cbind(microMcomplete, landuse, area, sitepos)
+
+#reorder columns
+microMtotal<- microMtotal[, c(1, 2, 3, 4, 13, 14, 15, 5, 6, 7, 8, 9, 10, 11, 12)]
+
+```
+
+## Exploratory analysis
+
+### Violin/boxplot analysis
+
+Data distribution by site
+
+Most of outliers (i.e. values outside 1.5 times the interquartile range above the upper quartile and below the lower quartile (Q1 - 1.5 * IQR or Q3 + 1.5 * IQR) correspond to urban areas. By contrast, in rural areas many values are below the detection limit of the instrument or even lower. THose values were substituted by 0.
+
+```{r violin general}
+
+longdf <- microMtotal %>% gather(nutrient, conc, -c(Pk, ID.number, siteID, replicate, landuse, area, sitepos, dates, time, run.number))
+
+# New facet label names for nutrient variable
+nutrient.labs <- c("NH4+", "NO2-", "NO3-", "PO43-", "SiO2")
+names(nutrient.labs) <- c("NH4", "NO2", "NO3", "PO4", "SiO2")
+
+# New facet label names for landuse variable
+landuse.labs <- c("Rural", "Urban")
+names(landuse.labs) <- c("R", "U")
+
+
+ggplot(longdf, aes(siteID, conc, colour=area)) +
+    scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"), 
+                       name="Area",
+                       breaks=c("R1", "R2", "U1", "U2"),
+                       labels=c("Tancha", "Ogimi", "Ginowan", "Nago"))+
+    geom_violin(size=0.8) +
+    facet_grid(nutrient~landuse, scales="free", labeller = labeller(nutrient = nutrient.labs, landuse = landuse.labs)) +
+    labs(title="Total nutrient concentrations",x="SiteID", y = "Concentration (µM)") +
+    geom_boxplot(width=0.1)+
+    geom_jitter(shape=16, position=position_jitter(0.1), size=0.6)+
+    theme_bw()+
+    theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=14))
+
+```
+
+
+At a simple glance, differences between rural and urban sites are evident for all the nutrients with exception of SiO2 which does not show much differences between the different landuse type.
+The higher occurrence of outliers hampers the visualization of differences between positions (i.e. C, N, S) in the same area, so we will have to remove the outliers to have a clearer visualization.
+
+Data by area (all sites of one area plotted together)
+
+
+```{r}
+ggplot(longdf, aes(area, conc, colour=area)) +
+    scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"), 
+                         name="Area",
+                       breaks=c("R1", "R2", "U1", "U2"),
+                       labels=c("Tancha", "Ogimi", "Ginowan", "Nago"))+
+    geom_violin(size=0.8) +
+    facet_grid(nutrient~landuse, scales="free", labeller = labeller(nutrient = nutrient.labs, landuse = landuse.labs)) +
+    labs(title="Total nutrient concentrations",x="SiteID", y = "Concentration (µM)") +
+    geom_boxplot(width=0.1)+
+    geom_jitter(shape=16, position=position_jitter(0.1), size=0.6)+
+    theme_bw()+
+    theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=14))
+```
+
+
+### Same but without outliers
+Violin plot by site ID
+
+```{r violin general no outliers}
+#first we remove the outliers by defining what is an outlier throught his function
+is_outlier <- function(x) {
+    return(x < quantile(x, 0.25) - 1.5 * IQR(x) | x > quantile(x, 0.75) + 1.5 * IQR(x))
+}
+
+out<- longdf %>% 
+    group_by(nutrient) %>% 
+    mutate(outlier = is_outlier(conc)) %>% 
+    filter(outlier == FALSE)
+
+ggplot(out, aes(siteID, conc, colour=area)) +
+    scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"), 
+                         name="Area",
+                       breaks=c("R1", "R2", "U1", "U2"),
+                       labels=c("Tancha", "Ogimi", "Ginowan", "Nago"))+
+    geom_violin(size=0.8) +
+    facet_grid(nutrient~landuse, scales="free", labeller = labeller(nutrient = nutrient.labs, landuse = landuse.labs)) +
+    labs(title="Total nutrient concentrations (without outliers)",x="SiteID", y = "Concentration (µM)") +
+    geom_boxplot(width=0.1)+
+    geom_jitter(shape=16, position=position_jitter(0.1), size=0.6)+
+    theme_bw()+
+    theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=14))
+
+```
+
+Violin plot by area (no outliers)
+
+```{r violin landuse no outliers}
+
+ggplot(out, aes(area, conc, colour=area)) +
+    scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"), 
+                         name="Area",
+                       breaks=c("R1", "R2", "U1", "U2"),
+                       labels=c("Tancha", "Ogimi", "Ginowan", "Nago"))+
+    geom_violin(size=0.8) +
+    facet_grid(nutrient~landuse, scales="free", labeller = labeller(nutrient = nutrient.labs, landuse = landuse.labs)) +
+    labs(title="Total nutrient concentrations (without outliers)",x="SiteID", y = "Concentration (µM)") +
+    geom_boxplot(width=0.1)+
+    geom_jitter(shape=16, position=position_jitter(0.1), size=0.6)+
+    theme_bw()+
+    theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=14))
+```
+
+### Temporal concentrations
+
+All the dataset. Again the high values found in some samples from urban environmnents hampers the seasonal trend in rural areas. As for the urban ones, central and northern points tend to have the highest values when compared with the southern points. Ginowan show higher sustained concentrations along time.
+
+
+```{r seasonal all}
+#calculate mean value
+seasonal<- longdf %>% 
+    group_by(siteID, nutrient, dates, sitepos, area, landuse) %>%
+    summarize(Mean = mean(conc))
+
+# New facet label names for nutrient variable
+nutrient.labs <- c("NH4+", "NO2-", "NO3-", "PO43-", "SiO2")
+names(nutrient.labs) <- c("NH4", "NO2", "NO3", "PO4", "SiO2")
+
+# New facet label names for landuse variable
+area.labs <- c("Tancha","Ogimi","Ginowan","Nago")
+names(area.labs) <- c("R1","R2","U1","U2")
+
+ggplot(seasonal, aes(x=dates, y=Mean, colour=sitepos, group_by(siteID))) +
+    scale_colour_manual(values = c("#D33B44", "#1d3554", "#7F8E39"), 
+                         name="Position site",
+                       breaks=c("C", "N", "S"),
+                       labels=c("Central", "North", "South"))+
+    geom_line(size=0.8) +
+    theme_bw() +
+    facet_grid(nutrient~area, scales="free", labeller = labeller(nutrient = nutrient.labs, area = area.labs)) +
+    theme(strip.text= element_text(size = 15), strip.background =element_rect(fill="white"), text = element_text(size=11))
+```
+
+Same but without outliers. Data from rural areas can be easily visualzied now. Still not clear temporal patterns can be distinguised. 
+
+```{r seasonal out}
+#calculate mean value
+outclean<- out %>% 
+    group_by(siteID, nutrient, dates, sitepos, area, landuse) %>%
+    summarize(Mean = mean(conc))
+
+# New facet label names for nutrient variable
+nutrient.labs <- c("NH4+", "NO2-", "NO3-", "PO43-", "SiO2")
+names(nutrient.labs) <- c("NH4", "NO2", "NO3", "PO4", "SiO2")
+
+# New facet label names for landuse variable
+area.labs <- c("Tancha","Ogimi","Ginowan","Nago")
+names(area.labs) <- c("R1","R2","U1","U2")
+
+ggplot(outclean, aes(x=dates, y=Mean, colour=sitepos, group_by(siteID))) +
+    scale_colour_manual(values = c("#D33B44", "#1d3554", "#7F8E39"), 
+                         name="Position site",
+                       breaks=c("C", "N", "S"),
+                       labels=c("Central", "North", "South"))+
+    geom_line(size=0.8) +
+    theme_bw() +
+    facet_grid(nutrient~area, scales="free", labeller = labeller(nutrient = nutrient.labs, area = area.labs)) +
+    theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=9))
+```
+
+Samples from the same area plotted together. Mean value is the solid line and the ribbon edges are the sd values (mean + or - sd).
+
+```{r ribbontotal}
+ribbonarea<- out %>% 
+    group_by(area, nutrient, dates, landuse) %>%
+    summarize(Mean = mean(conc), sd=sd(conc))
+
+ggplot(ribbonarea, aes(x=dates, y=Mean, colour=area, fill=area)) +
+           scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"),
+                       name="Area",
+                       breaks=c("R1", "R2", "U1", "U2"),
+                       labels=c("Tancha", "Ogimi", "Ginowan", "Nago")) +
+           scale_fill_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554")) +
+           geom_ribbon(aes(ymin = Mean - sd, ymax = Mean + sd), alpha= 0.4, colour=NA)+
+           geom_line() +
+           theme_bw() +
+           facet_grid(nutrient~area, scales="free", labeller = labeller(nutrient = nutrient.labs, area = area.labs)) +
+           theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=9)) +
+           theme(legend.position="none")
+```
+
+### PCA with the whole database
+
+Same but the first one was generated with autoplot and the second with ggplot
+
+```{r PCA}
+#select only the columns to show, summarize and change rownames
+#pca.a<- microMtotal %>%
+    #select(siteID, area, NO3, NO2, NH4, PO4, SiO2) %>%
+   # group_by(siteID, area) %>%
+    #summarize(NO3 = mean(NO3), NO2 =mean(NO2), NH4=mean(NH4), PO4=mean(PO4), SiO2=mean(SiO2))%>%
+    
+    
+pca.b<- microMtotal %>%
+    select(siteID, area, NO3, NO2, NH4, PO4, SiO2) 
+
+
+#create the pca
+pca.plotb<- prcomp(pca.b[, c(3:7)], scale. = TRUE)
+#fast plot
+autoplot(pca.plotb, data=pca.b, colour="area", frame=T)
+
+#in order to plot with ggplot first converting the previous list in a dataframe
+pca.b.gg<- data.frame(pca.plotb$x, area=pca.b$area)
+
+ggplot(pca.b.gg, aes(x=PC1, y=PC2, col=area)) +
+    scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"),
+    name="Area",
+    breaks=c("R1", "R2", "U1", "U2"),
+    labels=c("Tancha", "Ogimi", "Ginowan", "Nago")) +
+    geom_point(size=2.5)+
+    theme_bw() +
+    theme(text = element_text(size=15))
+```
