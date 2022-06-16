@@ -11,7 +11,7 @@ http://rpubs.com/angelaap/869151
 
 ## Biological data analysis
 
-This is an example of our workflow. 
+This is an example of our workflow. This image was taken from the [Gibbons lab github] (https://github.com/Gibbons-Lab/isb_course_2021). This repository includes great resources for learning about **Amplicon Sequence Analysis with Qiime2**
 
 ![our workflow](https://github.com/Gibbons-Lab/isb_course_2021/raw/main/docs/16S/assets/steps.png)
 
@@ -33,9 +33,85 @@ cd DNAmonitRS
 mkdir qiime
 
 ```
+Before starting with the denoising step we need to set up Qiime2 environment with conda. 
+
+```
+conda activate qiime2-2021.4
+
+```
+Our input data must be stored in Qiime artifacts (i.e. qza files). We can import the data with the import action from the tools.
+We create a new slurm file to import the data into qiime2. 
+
+```
+nano import.slurm
+
+```
+Below are the code files for only one sequencing run.
+
+```
+#!/bin/bash
+
+#SBATCH --job-name=denoise
+#SBATCH --partition=compute
+#SBATCH --time=1:00:00
+#SBATCH --mem-per-cpu=64G
+#SBATCH --nodes=1
+#SBATCH --ntasks=3
+#SBATCH --mail-user=xx.xxxx@oist.jp
+#SBATCH --mail-type=FAIL,END
+#SBATCH --input=none
+#SBATCH --output=rsemref_%j.out
 
 
+qiime tools import \
+  --type 'SampleData[PairedEndSequencesWithQuality]' \
+  --input-path /bucket/MitaraiU/Users/Angela/data/redsoil/DNAmonit/bact/plate1_ayse/Fastq_clean \
+  --input-format CasavaOneEightSingleLanePerSampleDirFmt \
+  --output-path 16demuxp1-paired-end.qza
 
+```
+The next step is denoising amplicon sequence variants. For that we will run the DADA2 plugin which will do 4 things:
+
+1. filter and trim the reads
+2. find the most likely set of unique sequences in the sample (ASVs)
+3. remove chimeras
+4. count the abundances of each ASV
+
+This process takes a while. In my case for 4 sequencing runs, 64 G of memory and 16 tasks takes more than 14 hours. So be ready for waiting! 
+
+In the same qiime directory:
+
+
+```
+nano import.slurm
+
+```
+
+```
+#!/bin/bash
+
+#SBATCH --job-name=denoise
+#SBATCH --partition=compute
+#SBATCH --time=24:00:00
+#SBATCH --mem-per-cpu=64G
+#SBATCH --nodes=1
+#SBATCH --mail-user=xx.xxx@oist.jp
+#SBATCH --mail-type=FAIL,END
+#SBATCH --input=none
+#SBATCH --output=rsemref_%j.out
+
+
+  qiime dada2 denoise-paired \
+--i-demultiplexed-seqs 16demuxp1-paired-end.qza \
+--output-dir ./16dada2_p1 \
+--o-representative-sequences 16rep1-seqs \
+--p-trim-left-f 15 \
+--p-trim-left-r 15 \
+--p-trunc-len-f 295 \
+--p-trunc-len-r 280 \
+--p-n-threads 16  
+
+```
 
 
 
