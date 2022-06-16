@@ -11,9 +11,13 @@ http://rpubs.com/angelaap/869151
 
 ## Biological data analysis
 
+This is an example of our workflow. 
+
+![our workflow](https://github.com/Gibbons-Lab/isb_course_2021/raw/main/docs/16S/assets/steps.png)
+
 The amplicon sequence analysis will is performed with Qiime 2 tool. The first part of the analysis is carried out in Terminal, where the most of computational demaning jobs are carried out on **Deigo** (OIST main cluster) and the second part will be performed in our local computer with R. 
 
-The sequences are received from the OIST sequencing center are already demultiplexed paired-end sequences. 
+The sequences are received from the OIST sequencing center are already demultiplexed paired-end sequences. For this project there are a total of four sequencing runs.
 
 ### Qiime2 Setup
 
@@ -27,7 +31,10 @@ mkir DNAmonitRS
 cd DNAmonitRS
 
 mkdir qiime
+
 ```
+
+
 
 
 
