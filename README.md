@@ -11,14 +11,26 @@ http://rpubs.com/angelaap/869151
 
 ## Biological data analysis
 
-The amplicon sequence analysis will is performed with Qiime 2 tool. The first part of the analysis is carried out in Terminal, where the most of computational demaning jobs are carried out on *Deigo and the second part will be performed with R. 
+The amplicon sequence analysis will is performed with Qiime 2 tool. The first part of the analysis is carried out in Terminal, where the most of computational demaning jobs are carried out on **Deigo** (OIST main cluster) and the second part will be performed in our local computer with R. 
 
-The sequences are received from the OIST sequencing center are 
+The sequences are received from the OIST sequencing center are already demultiplexed paired-end sequences. 
 
 ### Qiime2 Setup
 
-QIIME 2 is usually installed by following the [official installation instructions](https://docs.qiime2.org/2021.8/install/).
+QIIME 2 (v2021.4) software is usually installed by following the [official installation instructions](https://docs.qiime2.org/2022.2/install/).
 
-In terminal, once 
+In terminal, once logged in in **Deigo** , copy the result files from the sequencing center into a safe place, this time is the bucket folder. Then on flash directory: 
+
+```
+mkir DNAmonitRS
+
+cd DNAmonitRS
+
+mkdir qiime
+```
+
+
+
+
 
 
