@@ -31,20 +31,17 @@ mkir DNAmonitRS
 cd DNAmonitRS
 
 mkdir qiime
-
 ```
 Before starting with the denoising step we need to set up Qiime2 environment with conda. 
 
 ```
 conda activate qiime2-2021.4
-
 ```
 Our input data must be stored in Qiime artifacts (i.e. qza files). We can import the data with the import action from the tools.
 We create a new slurm file to import the data into qiime2. 
 
 ```
 nano import.slurm
-
 ```
 Below are the code files for only one sequencing run.
 
@@ -68,7 +65,6 @@ qiime tools import \
   --input-path /bucket/MitaraiU/Users/Angela/data/redsoil/DNAmonit/bact/plate1_ayse/Fastq_clean \
   --input-format CasavaOneEightSingleLanePerSampleDirFmt \
   --output-path 16demuxp1-paired-end.qza
-
 ```
 The next step is denoising amplicon sequence variants. For that we will run the DADA2 plugin which will do 4 things:
 
@@ -84,7 +80,6 @@ In the same qiime directory:
 
 ```
 nano import.slurm
-
 ```
 
 ```
@@ -110,8 +105,8 @@ nano import.slurm
 --p-trunc-len-f 295 \
 --p-trunc-len-r 280 \
 --p-n-threads 16  
-
 ```
+
 
 
 
