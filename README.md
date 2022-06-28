@@ -160,7 +160,7 @@ qiime feature-classifier classify-sklearn \
     --i-classifier 97classifier16.qza \
     --i-reads merged_rep-seqs.qza \
     --o-classification 16taxonomy.qza
-    ```
+```
 
 We can take a look to the 16taxonomy.qza file by opening it in qiime2 by converting it in a qzv file:
 
@@ -172,7 +172,7 @@ We can take a look to the 16taxonomy.qza file by opening it in qiime2 by convert
 
 ### Preparation of R for downstream analysis
 
-
+The Rmarkdown file and generated plots carried out with R and related packages can be found in the directory **Amplicon Sequence Analysis**. 
 
 Next step is 
 
