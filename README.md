@@ -66,6 +66,8 @@ qiime tools import \
   --input-format CasavaOneEightSingleLanePerSampleDirFmt \
   --output-path 16demuxp1-paired-end.qza
 ```
+### DADA2
+
 The next step is denoising amplicon sequence variants. For that we will run the DADA2 plugin which will do 4 things:
 
 1. filter and trim the reads
@@ -76,7 +78,6 @@ The next step is denoising amplicon sequence variants. For that we will run the 
 This process takes a while. In my case for 4 sequencing runs, 64 G of memory and 16 tasks takes more than 14 hours. So be ready for waiting! 
 
 In the same qiime directory:
-
 
 ```
 nano import.slurm
@@ -108,7 +109,7 @@ nano import.slurm
 ```
 
 I have got 4 directories (16dada2_p1, 16dada2_p2, 16dada2_p3, 16dada2_p4) for each for each sequence run. 
-In each directory there are two files (denoising_stats.qza and table.qza). Additionally, another file is generated (16rep1-seqs.qza, 16rep2-seqs.qza, 16rep3-seqs.qza, 16rep4-seqs.qza) in the previous directory. Next step is to join all the generated tables into one. 
+In each directory there are two files (denoising_stats.qza and table.qza). Additionally, another file is generated (16rep1-seqs.qza, 16rep2-seqs.qza, 16rep3-seqs.qza, 16rep4-seqs.qza) in the previous directory. Next step is to join merge all the generated feature tables and representative sequences from the different runs into one with the merge function
 
 ```
 #Feature-Table
@@ -117,8 +118,56 @@ qiime feature-table merge --i-tables /flash/MitaraiU/Angela/DNAmonitRS/qiime2/16
 #Representative Sequences
 qiime feature-table merge-seqs --i-data 16rep1-seqs.qza --i-data 16rep2-seqs.qza --i-data 16rep3-seqs.qza --i-data 16rep4-seqs.qza --o-merged-data merged_rep-seqs.qza
 ```
+### Taxonomy
+
+For the taxonomy I already had downloaded a pre-trained classifier. Choose your reference database or pre-trained classifier from [here](https://docs.qiime2.org/2019.4/data-resources/)
+
+**For SILVA (132) database**
+I wrote the next chunk of code in a separate .slurm file
+
+```
+#Rep_set
+SILVA97otus=/flash/MitaraiU/Angela/DNAmonitRS/qiime2/silva_132_97_16S.fna
+
+#Taxonomy
+Tax97=/flash/MitaraiU/Angela/DNAmonitRS/qiime2/taxonomy_all_levels.txt
+
+#converting the sequences and taxonomy to qiime files
+
+qiime tools import \
+    --type 'FeatureData[Sequence]' \
+    --input-path $SILVA97otus \
+    --output-path 97_otus16.qza
 
 
+qiime tools import \
+    --type 'FeatureData[Taxonomy]' \
+    --input-format HeaderlessTSVTaxonomyFormat \
+    --input-path $Tax97 \
+    --output-path 97ref-taxonomy16.qza
+
+#train the classifier
+
+qiime feature-classifier fit-classifier-naive-bayes \
+    --i-reference-reads 97_otus16.qza\
+    --i-reference-taxonomy 97ref-taxonomy16.qza\
+    --o-classifier 97classifier16.qza
+    
+#assign the taxonomy to our ASVs
+
+qiime feature-classifier classify-sklearn \
+    --i-classifier 97classifier16.qza \
+    --i-reads merged_rep-seqs.qza \
+    --o-classification 16taxonomy.qza
+    ```
+
+We can take a look to the 16taxonomy.qza file by opening it in qiime2 by converting it in a qzv file:
+
+```
+   qiime metadata tabulate \
+    --m-input-file 16taxonomy.qza \
+    --o-visualization 16taxonomy.qzv
+```
 
 
 
