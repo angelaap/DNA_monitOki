@@ -123,6 +123,7 @@ qiime feature-table merge-seqs --i-data 16rep1-seqs.qza --i-data 16rep2-seqs.qza
 For the taxonomy I already had downloaded a pre-trained classifier. Choose your reference database or pre-trained classifier from [here](https://docs.qiime2.org/2019.4/data-resources/)
 
 **For SILVA (132) database**
+
 I wrote the next chunk of code in a separate .slurm file
 
 ```
@@ -169,5 +170,10 @@ We can take a look to the 16taxonomy.qza file by opening it in qiime2 by convert
     --o-visualization 16taxonomy.qzv
 ```
 
+### Preparation of R for downstream analysis
+
+
+
+Next step is 
 
 

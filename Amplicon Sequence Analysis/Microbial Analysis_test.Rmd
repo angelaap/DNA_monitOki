@@ -1,0 +1,172 @@
+---
+title: "Microbial analysis"
+author: "Ares, Angela"
+date: "01/06/2022"
+output:
+  html_document:
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+The pipeline followed is this one applied originally for the red soil project in 2018 developed by Maggi Mars: https://maggimars.github.io/RedSoil/16S_Storms_and_RedSoil.html
+
+
+## Load Packages
+
+```{r packages, echo=FALSE}
+library("phyloseq")
+library("ggplot2")
+library("tidyr")
+library("RColorBrewer")
+library(reshape2)
+library(qiime2R)
+library(DESeq2)
+library("gridExtra")
+library(vegan)
+library("metagMisc")
+library("grid")
+library(jcolors)
+library("dplyr")
+library("breakaway")
+library("CoDaSeq")
+library("ggbiplot")
+library("intrval")
+library("tidyverse")
+library("ggpubr")
+set.seed(1)
+```
+
+Sample sequences provided by the SQC at OIST are already demultiplexed so next step is to to QIIME 2 (v2018.11) software (Bolyen et al. 2019). 
+
+
+
+Loading the data
+```{r}
+setwd("~/Downloads")
+phyloseq<-qza_to_phyloseq(features="JuneOctMergedTable.qza")
+#load metadata
+metatable <- read.csv("JuneOctSampleMap.csv", header = TRUE)
+row.names(metatable) <- metatable[["SampleID"]]
+detach("package:dplyr", unload=TRUE)
+library("dplyr")
+metatable <- metatable %>% select(SampleID, everything())
+#convert to phyloseq object
+META<- sample_data(metatable)
+```
+
+```{r}
+#loadtaxonomy
+taxonomy <- read.csv("JuneOctTaxonomy.csv", stringsAsFactors = FALSE)
+names(taxonomy) <- c("row", "tax", "Confidence")
+row.names(taxonomy) <-taxonomy[[1]]
+taxonomy <- taxonomy[,(-1)]
+```
+
+```{r}
+#SILVA taxonomy is in one column, separate to be able to work with different taxonomic levels:
+taxonomy <-  separate(taxonomy, tax, c("D0","D1", "D2", "D3", "D4", "D5", "D6", "D7", "D8", "D9", "D10", "D11", "D12", "D13", "D14"), sep = ";", fill = "right")
+#Keep the first 8 taxonomic levels (no assignments afetr that)
+taxonomy <- taxonomy[,c(1:8)]
+taxmat <- as.matrix(taxonomy)
+#covert taxonomy table to phyloseq object
+TAX = tax_table(taxmat)
+
+ps = merge_phyloseq(phyloseq, TAX, META)
+```
+
+## Prevalence
+```{r}
+prevdf = apply(X = otu_table(ps),
+                MARGIN = ifelse(taxa_are_rows(ps), yes = 1, no = 2),
+               FUN = function(x){sum(x > 0)})
+
+prevdf = data.frame(Prevalence = prevdf,
+                    TotalAbundance = taxa_sums(ps),
+                    tax_table(ps))
+#now we plot the prevalence against total abundance
+
+prevplot1<-ggplot(prevdf, aes(TotalAbundance, Prevalence / nsamples(ps),color=D1)) +
+  geom_hline(yintercept = 0.05, alpha = 0.5, linetype = 2) +  geom_point(size = 2, alpha = 0.7) +
+  theme_bw()+
+  scale_x_log10() +  xlab("Total Abundance") + ylab("Prevalence [Frac. Samples]") +
+  facet_wrap(~D1) + theme(legend.position="none")
+
+prevplot1
+```
+
+## Let's do some summary statistics
+
+First we stract ASV table from phyloseq object
+
+```{r}
+OTUs <- data.frame(otu_table(ps))
+#total number of ASVs in the data set
+OTUsRS<- OTUs
+OTUsRS$RowSum <- rowSums(OTUsRS)
+OTUsRSnoZero <- OTUsRS$RowSum!=0
+sum(OTUsRSnoZero)
+#Total number of ASVs per sample (range and mean):
+OTUs0 <- OTUs!=0 #is this number not a zero? true (1) or false (0)
+csums <- colSums(OTUs0) # col sums = observed ASV richness
+csumdf <- as.data.frame(csums)
+max(csumdf$csums) 
+min(csumdf$csums)
+mean(csumdf$csums)
+
+#Import denoising stats for both sequencing runs and merge them into one table:
+#RSJ1denoise <- read.table("16S_denoisingData.tsv", header = TRUE)
+denoise <- read.table("16S_denoisingData.tsv", header = TRUE)
+#denoise<- rbind(RSJ1denoise,Junedenoise)
+
+#numbers before denoise
+sum(denoise$input)
+min(denoise$input)
+max(denoise$input)
+mean(denoise$input)
+#numbers after denoise
+sum(denoise$non.chimeric)
+min(denoise$non.chimeric)
+max(denoise$non.chimeric)
+mean(denoise$non.chimeric)
+```
+## Relative abundance plots
+Keep the taxa that are abundant enough to be visible in relative abundance plot:
+```{r}
+highPrev<-  c("D_1__Acidobacteria", "D_1__Actinobacteria", "D_1__Bacteroidetes", "D_1__Chloroflexi", "D_1__Cyanobacteria", "D_1__Dadabacteria", "D_1__Epsilonbacteraeota", "D_1__Euryarchaeota", "D_1__Firmicutes", "D_1__Fusobacteria", "D_1__Marinimicrobia (SAR406 clade)", "D_1__Planctomycetes", "D_1__Proteobacteria", "D_1__Rokubacteria", "D_1__Verrucomicrobia", "D_1__Gemmatimonadetes")
+psNHighPrev<- subset_taxa(ps, D1 %in% highPrev)
+
+#convert counts to relative abundance
+physeqPra<- transform_sample_counts(psNHighPrev, function(OTU) 100* OTU/sum(OTU))
+```
+### Make the plot for field samples
+
+First at Phylum level
+
+```{r}
+#D1 taxonomic level
+glomD1<- tax_glom(physeqPra, "D1")
+#subset to include only field samples
+psFieldRS<- subset_samples(glomD1, Treat == "A" | Treat == "RS")
+#make relative abundance
+
+newcolors= c("#332288", "#88CCEE", "#44AA99", "#FFCC00", "#CC3311", "#CC6677", "#FFCCCC", "#999933", "#DDCC77","#EE3377", "#882255", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#DDAA33")
+
+metaFieldRS <- metatable[metatable$Treat =="A" | metatable$Treat == "RS", ]
+metaFieldRS$Treatment <- factor(metaFieldRS$Treatment, levels=c("A1 6/13", "A2 6/13", "A3 6/13", "A4 6/13", "A1 6/16", "A2 6/16", "A3 6/16", "A4 6/16", "A1 6/19", "A2 6/19", "A3 6/19", "A4 6/19", "RS1", "RS2", "RS3", "RS4", "A1 9/28", "A2 9/28", "A3 9/28", "A4 9/28", "A1 10/01", "A2 10/01", "A3 10/01", "A4 10/01", "A1 10/03", "A2 10/03", "A3 10/03", "A4 10/03", "A1 10/08", "A2 10/08", "A3 10/08", "A4 10/08", "RS 2", "RS 3" ))
+METArs<- sample_data(metaFieldRS)
+sample_data(psFieldRS) <- METArs
+
+taxabarplotD1<-plot_bar(psFieldRS, x= "Treatment", fill = "D1", facet_grid= ~Month) +  scale_y_continuous(expand = c(0, 0)) + ggtitle("") + scale_fill_manual(values=newcolors ) + theme(legend.title=element_blank()) + geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +theme_classic() + theme(text = element_text(size=14))+theme(axis.text.x = element_text(angle = 90)) + xlab("Sample") +ylab("Relative Abundance(%)") + facet_grid(~Month,scales="free") + theme(text = element_text(size=14))
+taxabarplotD1#+ theme(legend.position="none")
+```
+
+
