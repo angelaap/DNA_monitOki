@@ -107,6 +107,16 @@ nano import.slurm
 --p-n-threads 16  
 ```
 
+I have got 4 directories (16dada2_p1, 16dada2_p2, 16dada2_p3, 16dada2_p4) for each for each sequence run. 
+In each directory there are two files (denoising_stats.qza and table.qza). Additionally, another file is generated (16rep1-seqs.qza, 16rep2-seqs.qza, 16rep3-seqs.qza, 16rep4-seqs.qza) in the previous directory. Next step is to join all the generated tables into one. 
+
+```
+#Feature-Table
+qiime feature-table merge --i-tables /flash/MitaraiU/Angela/DNAmonitRS/qiime2/16dada2_p1/table.qza --i-tables /flash/MitaraiU/Angela/DNAmonitRS/qiime2/16dada2_p2/table.qza --i-tables /flash/MitaraiU/Angela/DNAmonitRS/qiime2/16dada2_p3/table.qza --i-tables /flash/MitaraiU/Angela/DNAmonitRS/qiime2/16dada2_p4/table.qza --o-merged-table merged_table.qza
+
+#Representative Sequences
+qiime feature-table merge-seqs --i-data 16rep1-seqs.qza --i-data 16rep2-seqs.qza --i-data 16rep3-seqs.qza --i-data 16rep4-seqs.qza --o-merged-data merged_rep-seqs.qza
+```
 
 
 
