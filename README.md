@@ -172,8 +172,21 @@ We can take a look to the 16taxonomy.qza file by opening it in qiime2 by convert
 
 ### Preparation of R for downstream analysis
 
-The Rmarkdown file and generated plots carried out with R and related packages can be found in the directory **Amplicon Sequence Analysis**. 
+The Rmarkdown file and generated plots carried out with R and related packages can be found in the directory **Amplicon Sequence Analysis**
 
-Next step is 
+Next step is to open R and make sure we have install all the required packages. Specially important are **Phyloseq** and **Qiime2R**. Phyloseq it is a very complete package that helps out with all the amplicon sequence analysis and Qiime2R it is useful to import qiime2 artifacts for Phyloseq
+
+These are the most important packages we will use:
+
+```
+library("phyloseq")
+library("ggplot2")
+library("tidyr")
+library(qiime2R)
+library(DESeq2)
+library(vegan)
+library("breakaway")
+set.seed(1)
+```
 
 

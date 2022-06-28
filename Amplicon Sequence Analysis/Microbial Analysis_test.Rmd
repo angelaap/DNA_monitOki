@@ -45,10 +45,6 @@ library("ggpubr")
 set.seed(1)
 ```
 
-Sample sequences provided by the SQC at OIST are already demultiplexed so next step is to to QIIME 2 (v2018.11) software (Bolyen et al. 2019). 
-
-
-
 Loading the data
 ```{r}
 setwd("~/Downloads")
