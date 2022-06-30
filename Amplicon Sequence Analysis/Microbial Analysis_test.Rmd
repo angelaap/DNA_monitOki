@@ -58,10 +58,26 @@ Create the metadata file
 meta1<- colnames(phyloseq)
 metax<- data.frame(meta1)
 metadf<- melt(metax)
-z<- metadf %>% 
-  rename(
-    Sample.ID = meta1
-    )
+names(metadf)[1] <- "Sample.ID"
+meta2<- cbind(metadf, metadf[1])
+names(meta2)[2] <- "SS"
+meta3<- meta2 %>%
+  separate(SS, c("SS", "Date"), sep = "-", extra = "merge")
+meta3<- cbind(meta3, meta3[2])
+names(meta3)[4] <- "Area"
+meta3<- meta3 %>%
+  separate(Date, c("year", "month", "day", "other"), sep = "-") 
+meta3$other<- NULL
+meta4<- split(meta3,cumsum(1:nrow(meta3)%in%81))
+#it creates a list so next we need to create a df out of the list
+DF1<- as.data.frame(meta4$`0`)
+DF2<- as.data.frame(meta4$`1`)
+colnames(DF2) <- c("Sample.ID", "SS", "day", "month", "year", "Area")
+meta5<- rbind(DF1, DF2)
+meta6<-meta5 %>% unite(date, year, month, day, sep = "-")
+
+  unite(date, year, month, day, sep = "-")
+
 #load metadata
 metatable <- read.csv("JuneOctSampleMap.csv", header = TRUE)
 row.names(metatable) <- metatable[["SampleID"]]
