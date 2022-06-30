@@ -45,10 +45,23 @@ library("ggpubr")
 set.seed(1)
 ```
 
+
 Loading the data
 ```{r}
-setwd("~/Downloads")
-phyloseq<-qza_to_phyloseq(features="JuneOctMergedTable.qza")
+setwd("~/Documents/GitHub/DNA_monitOki/Amplicon Sequence Analysis")
+phyloseq<-qza_to_phyloseq(features="merged_table.qza")
+```
+
+Create the metadata file
+
+```{r}
+meta1<- colnames(phyloseq)
+metax<- data.frame(meta1)
+metadf<- melt(metax)
+z<- metadf %>% 
+  rename(
+    Sample.ID = meta1
+    )
 #load metadata
 metatable <- read.csv("JuneOctSampleMap.csv", header = TRUE)
 row.names(metatable) <- metatable[["SampleID"]]
@@ -58,6 +71,9 @@ metatable <- metatable %>% select(SampleID, everything())
 #convert to phyloseq object
 META<- sample_data(metatable)
 ```
+
+```
+
 
 ```{r}
 #loadtaxonomy
