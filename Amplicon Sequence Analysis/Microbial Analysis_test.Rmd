@@ -75,15 +75,22 @@ DF2<- as.data.frame(meta4$`1`)
 colnames(DF2) <- c("Sample.ID", "SS", "day", "month", "year", "Area")
 meta5<- rbind(DF1, DF2)
 meta6<-meta5 %>% unite(date, year, month, day, sep = "-")
-
-  unite(date, year, month, day, sep = "-")
+#the column Area has some white spaces, we need to get rid of them
+meta7<- meta6 %>%
+  mutate_if(is.character, str_trim)%>%
+  separate(Area, c("Nothing", "LandUse", "Number", "Position"), sep="")
+meta7clean <- meta7[, -4] 
+meta8<- cbind(meta7clean, meta7clean[4], meta7clean[5])
+names(meta8)[7] <- "join1"
+names(meta8)[8] <- "join2"
+meta8$Area <- paste(meta8$join1, meta8$join2, sep="")
+metatable <- meta8[, -c(7,8)] 
 
 #load metadata
-metatable <- read.csv("JuneOctSampleMap.csv", header = TRUE)
-row.names(metatable) <- metatable[["SampleID"]]
+row.names(metatable) <- metatable[["Sample.ID"]]
 detach("package:dplyr", unload=TRUE)
 library("dplyr")
-metatable <- metatable %>% select(SampleID, everything())
+metatable <- metatable %>% select(Sample.ID, everything())
 #convert to phyloseq object
 META<- sample_data(metatable)
 ```
