@@ -52,7 +52,7 @@ setwd("~/Documents/GitHub/DNA_monitOki/Amplicon Sequence Analysis")
 phyloseq<-qza_to_phyloseq(features="merged_table.qza")
 ```
 
-Create the metadata file
+Create the metadata file from scratch
 
 ```{r}
 meta1<- colnames(phyloseq)
@@ -92,15 +92,13 @@ detach("package:dplyr", unload=TRUE)
 library("dplyr")
 metatable <- metatable %>% select(Sample.ID, everything())
 #convert to phyloseq object
-META<- sample_data(metatable)
+Meta_final<- sample_data(metatable)
 ```
 
-```
-
-
+From the qiime2 it is possible to download the .tsv file (16taxonomy) from the viewer and then save it as .csv
 ```{r}
 #loadtaxonomy
-taxonomy <- read.csv("JuneOctTaxonomy.csv", stringsAsFactors = FALSE)
+taxonomy <- read.csv("16taxonomy.csv", stringsAsFactors = FALSE, header = FALSE)
 names(taxonomy) <- c("row", "tax", "Confidence")
 row.names(taxonomy) <-taxonomy[[1]]
 taxonomy <- taxonomy[,(-1)]
@@ -113,9 +111,9 @@ taxonomy <-  separate(taxonomy, tax, c("D0","D1", "D2", "D3", "D4", "D5", "D6", 
 taxonomy <- taxonomy[,c(1:8)]
 taxmat <- as.matrix(taxonomy)
 #covert taxonomy table to phyloseq object
-TAX = tax_table(taxmat)
+taxon = tax_table(taxmat)
 
-ps = merge_phyloseq(phyloseq, TAX, META)
+ps = merge_phyloseq(phyloseq, taxon, Meta_final)
 ```
 
 ## Prevalence
@@ -190,7 +188,7 @@ First at Phylum level
 #D1 taxonomic level
 glomD1<- tax_glom(physeqPra, "D1")
 #subset to include only field samples
-psFieldRS<- subset_samples(glomD1, Treat == "A" | Treat == "RS")
+psFieldRS<- subset_samples(glomD1)#, Treat == "A" | Treat == "RS")
 #make relative abundance
 
 newcolors= c("#332288", "#88CCEE", "#44AA99", "#FFCC00", "#CC3311", "#CC6677", "#FFCCCC", "#999933", "#DDCC77","#EE3377", "#882255", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#DDAA33")
@@ -200,7 +198,8 @@ metaFieldRS$Treatment <- factor(metaFieldRS$Treatment, levels=c("A1 6/13", "A2 6
 METArs<- sample_data(metaFieldRS)
 sample_data(psFieldRS) <- METArs
 
-taxabarplotD1<-plot_bar(psFieldRS, x= "Treatment", fill = "D1", facet_grid= ~Month) +  scale_y_continuous(expand = c(0, 0)) + ggtitle("") + scale_fill_manual(values=newcolors ) + theme(legend.title=element_blank()) + geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +theme_classic() + theme(text = element_text(size=14))+theme(axis.text.x = element_text(angle = 90)) + xlab("Sample") +ylab("Relative Abundance(%)") + facet_grid(~Month,scales="free") + theme(text = element_text(size=14))
+
+taxabarplotD1<-plot_bar(psFieldRS, x= "Area", fill = "D1") +  scale_y_continuous(expand = c(0, 0)) + ggtitle("") + theme(legend.title=element_blank()) + geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +theme_classic() + theme(text = element_text(size=14))+theme(axis.text.x = element_text(angle = 90)) + xlab("Sample") +ylab("Relative Abundance(%)") + theme(text = element_text(size=14))
 taxabarplotD1#+ theme(legend.position="none")
 ```
 
