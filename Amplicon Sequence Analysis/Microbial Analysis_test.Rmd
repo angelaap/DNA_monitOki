@@ -75,16 +75,17 @@ DF2<- as.data.frame(meta4$`1`)
 colnames(DF2) <- c("Sample.ID", "SS", "day", "month", "year", "Area")
 meta5<- rbind(DF1, DF2)
 meta6<-meta5 %>% unite(date, year, month, day, sep = "-")
+meta6$Month<- paste(meta5$month)
 #the column Area has some white spaces, we need to get rid of them
 meta7<- meta6 %>%
   mutate_if(is.character, str_trim)%>%
   separate(Area, c("Nothing", "LandUse", "Number", "Position"), sep="")
 meta7clean <- meta7[, -4] 
 meta8<- cbind(meta7clean, meta7clean[4], meta7clean[5])
-names(meta8)[7] <- "join1"
-names(meta8)[8] <- "join2"
+names(meta8)[8] <- "join1"
+names(meta8)[9] <- "join2"
 meta8$Area <- paste(meta8$join1, meta8$join2, sep="")
-metatable <- meta8[, -c(7,8)] 
+metatable <- meta8[, -c(8,9)] 
 
 #load metadata
 row.names(metatable) <- metatable[["Sample.ID"]]
@@ -174,7 +175,8 @@ mean(denoise$non.chimeric)
 ## Relative abundance plots
 Keep the taxa that are abundant enough to be visible in relative abundance plot:
 ```{r}
-highPrev<-  c("D_1__Acidobacteria", "D_1__Actinobacteria", "D_1__Bacteroidetes", "D_1__Chloroflexi", "D_1__Cyanobacteria", "D_1__Dadabacteria", "D_1__Epsilonbacteraeota", "D_1__Euryarchaeota", "D_1__Firmicutes", "D_1__Fusobacteria", "D_1__Marinimicrobia (SAR406 clade)", "D_1__Planctomycetes", "D_1__Proteobacteria", "D_1__Rokubacteria", "D_1__Verrucomicrobia", "D_1__Gemmatimonadetes")
+highPrev<-  c("D_1__Actinobacteria", "D_1__Bacteroidetes", "D_1__Chlamydiae;", "D_1__Chloroflexi","D_1__Cloacimonetes", "D_1__Cyanobacteria", "D_1__Dadabacteria","D_1__Deinococcus-Thermus", "D_1__Dependentiae", "D_1__Epsilonbacteraeota", "D_1__Euryarchaeota", "D_1__Firmicutes", "D_1__Fusobacteria", "D_1__Kiritimatiellaeota", "D_1__Lentisphaerae", "D_1__Marinimicrobia (SAR406 clade)", "D_1__Patescibacteria", "D_1__Planctomycetes", "D_1__Proteobacteria","D_1__Synergistetes", "D_1__Thaumarchaeota", "D_1__Verrucomicrobia")
+#in total 22 phylum
 psNHighPrev<- subset_taxa(ps, D1 %in% highPrev)
 
 #convert counts to relative abundance
@@ -187,20 +189,20 @@ First at Phylum level
 ```{r}
 #D1 taxonomic level
 glomD1<- tax_glom(physeqPra, "D1")
-#subset to include only field samples
-psFieldRS<- subset_samples(glomD1)#, Treat == "A" | Treat == "RS")
+#subset to include only samples from the Red Soil project and leave out those collected from pumice stones
+psDNA_RS<- subset_samples(glomD1, LandUse == "R" | LandUse == "U")
 #make relative abundance
 
-newcolors= c("#332288", "#88CCEE", "#44AA99", "#FFCC00", "#CC3311", "#CC6677", "#FFCCCC", "#999933", "#DDCC77","#EE3377", "#882255", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#DDAA33")
+newcolors= c("#DDCC77","#88CCEE", "#44AA99", "#FFCC00", "#CC3311", "#CC6677", "#FFCCCC", "#999933", "#DDCC77","#EE3377", "#882255", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#DDAA33","#332288", "#88CCEE", "#44AA99", "#FFCC00", "#CC3311", "#CC6677")
 
-metaFieldRS <- metatable[metatable$Treat =="A" | metatable$Treat == "RS", ]
-metaFieldRS$Treatment <- factor(metaFieldRS$Treatment, levels=c("A1 6/13", "A2 6/13", "A3 6/13", "A4 6/13", "A1 6/16", "A2 6/16", "A3 6/16", "A4 6/16", "A1 6/19", "A2 6/19", "A3 6/19", "A4 6/19", "RS1", "RS2", "RS3", "RS4", "A1 9/28", "A2 9/28", "A3 9/28", "A4 9/28", "A1 10/01", "A2 10/01", "A3 10/01", "A4 10/01", "A1 10/03", "A2 10/03", "A3 10/03", "A4 10/03", "A1 10/08", "A2 10/08", "A3 10/08", "A4 10/08", "RS 2", "RS 3" ))
-METArs<- sample_data(metaFieldRS)
-sample_data(psFieldRS) <- METArs
+metaDNA_RS <- metatable[metatable$LandUse =="R" | metatable$LandUse == "U", ]
+#metaFieldRS$Treatment <- factor(metaFieldRS$Treatment, levels=c("A1 6/13", "A2 6/13", "A3 6/13", "A4 6/13", "A1 6/16", "A2 6/16", "A3 6/16", "A4 6/16", "A1 6/19", "A2 6/19", "A3 6/19", "A4 6/19", "RS1", "RS2", "RS3", "RS4", "A1 9/28", "A2 9/28", "A3 9/28", "A4 9/28", "A1 10/01", "A2 10/01", "A3 10/01", "A4 10/01", "A1 10/03", "A2 10/03", "A3 10/03", "A4 10/03", "A1 10/08", "A2 10/08", "A3 10/08", "A4 10/08", "RS 2", "RS 3" ))
+METArs<- sample_data(metaDNA_RS)
+sample_data(psDNA_RS) <- METArs
 
 
-taxabarplotD1<-plot_bar(psFieldRS, x= "Area", fill = "D1") +  scale_y_continuous(expand = c(0, 0)) + ggtitle("") + theme(legend.title=element_blank()) + geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +theme_classic() + theme(text = element_text(size=14))+theme(axis.text.x = element_text(angle = 90)) + xlab("Sample") +ylab("Relative Abundance(%)") + theme(text = element_text(size=14))
-taxabarplotD1#+ theme(legend.position="none")
+taxabarplotD1<-plot_bar(psDNA_RS, x= "SS", fill = "D1", facet_grid= ~Month) +  scale_y_continuous(expand = c(0, 0)) + ggtitle("") + scale_fill_manual(values=newcolors ) + theme(legend.title=element_blank()) + geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +theme_classic() + theme(text = element_text(size=14))+theme(axis.text.x = element_text(angle = 90)) + xlab("Sample") +ylab("Relative Abundance(%)") + facet_grid(~Month,scales="free") + theme(text = element_text(size=14))
+taxabarplotD1+ theme(legend.position="none")
 ```
 
 
