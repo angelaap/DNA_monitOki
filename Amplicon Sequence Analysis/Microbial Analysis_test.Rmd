@@ -281,3 +281,25 @@ montlybarplotD1<-plot_bar(psDNA_month, x= "SS", fill = "D1",facet_grid= ~LandUse
 montlybarplotD1
 ```
 
+## Alpha Diversity
+
+```{r}
+alphazero<-  subset_samples(ps, LandUse == "R" | LandUse == "U")
+
+ad <- breakaway(alphazero)
+
+adiver<- summary(ad) %>%
+  add_column("Sample.ID" = alphazero %>% otu_table %>% sample_names)
+
+badf<- merge(adiver, metatable, by = "Sample.ID")
+
+#just comparing sampling sites
+SSAD <- ggplot(badf, aes(x=SS, y=estimate, fill = SS)) +  facet_grid(. ~ Month, scales="free" )+ geom_boxplot() + theme_bw() + theme(text = element_text(size=14)) +ylab("Richness Estimate") +xlab("") + scale_fill_manual(values=c("#004488", "#D33B44"))+ theme(text = element_text(size=18)) + theme(legend.position="none")
+
+SSAD
+
+LandUseAD <- ggplot(badf, aes(x=SS, y=estimate, fill = LandUse)) +  facet_grid(. ~ Month, scales="free" )+ geom_boxplot() + theme_bw() + theme(text = element_text(size=14)) +ylab("Richness Estimate") +xlab("") + scale_fill_manual(values=c("#004488", "#D33B44"))+ theme(text = element_text(size=18)) + theme(legend.position="none")
+
+LandUseAD
+```
+
