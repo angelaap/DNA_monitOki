@@ -205,7 +205,7 @@ str(sample_data(psDNA_RS))
 psDNA_RS<-merge_samples(psDNA_RS,"SS")
 psDNA_RS<- transform_sample_counts(psDNA_RS, function(OTU) 100* OTU/sum(OTU))
 
-newcolors= c("#DDCC77","#88CCEE", "#44AA99", "#FFCC00", "#CC3311", "#CC6677", "#FFCCCC", "#999933", "#DDCC77","#EE3377", "#882255", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#DDAA33","#332288", "#88CCEE", "#44AA99", "#FFCC00", "#CC3311", "#CC6677")
+colours= c( "#332288", "#44AA99", "#88CCEE", "#FFCC00", "#CC3311", "#CC6677", "#999933", "#DDCC77", "#EE3377", "#882255", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#DDAA33","#570D32", "#E5C616", "#D33B44", "#1d3554", "#FFCCCC","#DFE07C","#7F8E39")
 
 metaDNA_RS <- metatable[metatable$LandUse =="R" | metatable$LandUse == "U", ]
 metaFieldRS$Treatment <- factor(metaFieldRS$Treatment, levels=c("A1 6/13", "A2 6/13", "A3 6/13", "A4 6/13", "A1 6/16", "A2 6/16", "A3 6/16", "A4 6/16", "A1 6/19", "A2 6/19", "A3 6/19", "A4 6/19", "RS1", "RS2", "RS3", "RS4", "A1 9/28", "A2 9/28", "A3 9/28", "A4 9/28", "A1 10/01", "A2 10/01", "A3 10/01", "A4 10/01", "A1 10/03", "A2 10/03", "A3 10/03", "A4 10/03", "A1 10/08", "A2 10/08", "A3 10/08", "A4 10/08", "RS 2", "RS 3" ))
@@ -213,16 +213,16 @@ metaFieldRS$Treatment <- factor(metaFieldRS$Treatment, levels=c("A1 6/13", "A2 6
 generalbarplotD1<-plot_bar(psDNA_RS, x= "SS", fill = "D1") +  
   scale_y_continuous(expand = c(0, 0)) + 
   ggtitle("") + 
-  scale_fill_manual(values=newcolors ) + 
+  scale_fill_manual(values=colours ) + 
   theme(legend.title=element_blank()) + 
-  geom_bar(stat="identity", position="stack", width =0.9) +
+  geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +
   theme_classic() + 
   theme(text = element_text(size=14))+
   theme(axis.text.x = element_text(angle = 90)) + 
   xlab("Sample") +ylab("Relative Abundance(%)") + 
   theme(text = element_text(size=14))
 
-taxabarplotD1+ theme(legend.position="none")
+generalbarplotD1+ theme(legend.position="none")
 ```
 
 
