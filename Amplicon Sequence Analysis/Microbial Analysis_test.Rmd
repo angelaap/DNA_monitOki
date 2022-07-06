@@ -175,7 +175,7 @@ mean(denoise$non.chimeric)
 ## Relative abundance plots
 Keep the taxa that are abundant enough to be visible in relative abundance plot:
 ```{r}
-highPrev<-  c("D_1__Actinobacteria", "D_1__Bacteroidetes", "D_1__Chlamydiae;", "D_1__Chloroflexi","D_1__Cloacimonetes", "D_1__Cyanobacteria", "D_1__Dadabacteria","D_1__Deinococcus-Thermus", "D_1__Dependentiae", "D_1__Epsilonbacteraeota", "D_1__Euryarchaeota", "D_1__Firmicutes", "D_1__Fusobacteria", "D_1__Kiritimatiellaeota", "D_1__Lentisphaerae", "D_1__Marinimicrobia (SAR406 clade)", "D_1__Patescibacteria", "D_1__Planctomycetes", "D_1__Proteobacteria","D_1__Synergistetes", "D_1__Thaumarchaeota", "D_1__Verrucomicrobia")
+highPrev<-  c("D_1__Actinobacteria", "D_1__Bacteroidetes", "D_1__Chlamydiae;", "D_1__Chloroflexi","D_1__Cloacimonetes", "D_1__Cyanobacteria", "D_1__Dadabacteria","D_1__Dependentiae", "D_1__Epsilonbacteraeota", "D_1__Euryarchaeota", "D_1__Firmicutes", "D_1__Fusobacteria", "D_1__Lentisphaerae", "D_1__Marinimicrobia (SAR406 clade)", "D_1__Patescibacteria", "D_1__Planctomycetes", "D_1__Proteobacteria", "D_1__Verrucomicrobia")
 #in total 22 phylla
 psNHighPrev<- subset_taxa(ps, D1 %in% highPrev)
 
@@ -188,7 +188,7 @@ First at Phylum level
 
 ```{r}
 #D1 taxonomic level
-glomD1<- tax_glom(psNHighPrev, "D1")
+glomD1<- tax_glom(physeqPra, "D1")
 #subset to include only samples from the Red Soil project and leave out those collected from pumice stones
 psDNA_RS<- subset_samples(glomD1, LandUse == "R" | LandUse == "U")
 
@@ -205,24 +205,79 @@ str(sample_data(psDNA_RS))
 psDNA_RS<-merge_samples(psDNA_RS,"SS")
 psDNA_RS<- transform_sample_counts(psDNA_RS, function(OTU) 100* OTU/sum(OTU))
 
-colours= c( "#332288", "#44AA99", "#88CCEE", "#FFCC00", "#CC3311", "#CC6677", "#999933", "#DDCC77", "#EE3377", "#882255", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#DDAA33","#570D32", "#E5C616", "#D33B44", "#1d3554", "#FFCCCC","#DFE07C","#7F8E39")
+colours= c("#332288", "#44AA99", "#88CCEE", "#882255", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#570D32", "#E48F1B", "#FFCCCC","#D33B44","#1d3554")
 
-metaDNA_RS <- metatable[metatable$LandUse =="R" | metatable$LandUse == "U", ]
-metaFieldRS$Treatment <- factor(metaFieldRS$Treatment, levels=c("A1 6/13", "A2 6/13", "A3 6/13", "A4 6/13", "A1 6/16", "A2 6/16", "A3 6/16", "A4 6/16", "A1 6/19", "A2 6/19", "A3 6/19", "A4 6/19", "RS1", "RS2", "RS3", "RS4", "A1 9/28", "A2 9/28", "A3 9/28", "A4 9/28", "A1 10/01", "A2 10/01", "A3 10/01", "A4 10/01", "A1 10/03", "A2 10/03", "A3 10/03", "A4 10/03", "A1 10/08", "A2 10/08", "A3 10/08", "A4 10/08", "RS 2", "RS 3" ))
+#other cool colors("#999933","#DFE07C","#DDAA33","#DDCC77","#CC3311")
 
-generalbarplotD1<-plot_bar(psDNA_RS, x= "SS", fill = "D1") +  
+#labels for SS (during merging everything was changed)
+SSnames<- c("R1_C", "R1_N", "R1_S", "R2_C", "R2_N", "R2_S","U1_C", "U1_N", "U1_S", "U2_C", "U2_N", "U2_S")
+#labels for LandUse
+LandUselab<- list("1"="Rural", "2"="Urban")
+LandUselab_labeller <- function(variable,value){
+  return(LandUselab[value])
+}
+  
+generalbarplotD1<-plot_bar(psDNA_RS, x= "SS", fill = "D1",facet_grid= ~LandUse) +  
   scale_y_continuous(expand = c(0, 0)) + 
   ggtitle("") + 
   scale_fill_manual(values=colours ) + 
+  scale_x_discrete(labels=SSnames)+ 
   theme(legend.title=element_blank()) + 
   geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +
   theme_classic() + 
   theme(text = element_text(size=14))+
   theme(axis.text.x = element_text(angle = 90)) + 
+  facet_grid(~LandUse,scales="free", labeller = LandUselab_labeller) + 
   xlab("Sample") +ylab("Relative Abundance(%)") + 
   theme(text = element_text(size=14))
 
-generalbarplotD1+ theme(legend.position="none")
+
+generalbarplotD1
+
 ```
 
+It is clear that some phylla like Epsilonbacteraerota, Firmicutes, Patescibacteria are more present in urban areas than rural ones but it is this tendency the same trough the whole year?
+Let's check for different months:
+```{r}
+#We need to repeat some steps from before so I'll skip the explanations. We just need to change the number when subsetting the month so we can get a plot from each month
+psDNA_month<- subset_samples(glomD1, Month == "12")
+
+df <- as.data.frame(lapply(sample_data(psDNA_month),function (y) if(class(y)!="factor") as.factor(y) else y),stringsAsFactors=T)
+row.names(df) <- sample_names(psDNA_month)
+sample_data(psDNA_month) <- sample_data(df)
+
+str(sample_data(psDNA_month))
+
+psDNA_month<-merge_samples(psDNA_month,"SS")
+psDNA_month<- transform_sample_counts(psDNA_month, function(OTU) 100* OTU/sum(OTU))
+colours= c("#332288", "#44AA99", "#88CCEE", "#882255", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#570D32", "#E48F1B", "#FFCCCC","#D33B44","#1d3554")
+
+#other cool colors("#999933","#DFE07C","#DDAA33","#DDCC77","#CC3311")
+
+#labels for SS (during merging everything was changed)
+SSnames<- c("R1_C", "R1_N", "R1_S", "R2_C", "R2_N", "R2_S","U1_C", "U1_N", "U1_S", "U2_C", "U2_N", "U2_S")
+
+#labels for LandUse
+LandUselab<- list("1"="Rural", "2"="Urban")
+LandUselab_labeller <- function(variable,value){
+  return(LandUselab[value])
+}
+  
+montlybarplotD1<-plot_bar(psDNA_month, x= "SS", fill = "D1",facet_grid= ~LandUse) +  
+  scale_y_continuous(expand = c(0, 0)) + 
+  ggtitle("") + 
+  scale_fill_manual(values=colours ) + 
+  scale_x_discrete(labels=SSnames)+ 
+  theme(legend.title=element_blank()) + 
+  geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +
+  theme_classic() + 
+  theme(text = element_text(size=14))+
+  theme(axis.text.x = element_text(angle = 90)) + 
+  facet_grid(~LandUse,scales="free", labeller = LandUselab_labeller) + 
+  xlab("Sample") +ylab("Relative Abundance(%)") + 
+  theme(text = element_text(size=14))
+
+
+montlybarplotD1
+```
 
