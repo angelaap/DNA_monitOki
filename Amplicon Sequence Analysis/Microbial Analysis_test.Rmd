@@ -303,3 +303,57 @@ LandUseAD <- ggplot(badf, aes(x=SS, y=estimate, fill = LandUse)) +  facet_grid(.
 LandUseAD
 ```
 
+## Ordination and distance
+
+We calculate the Atchison Distance
+
+First, lets perform a log-ratio normalization:
+
+```{r}
+
+OTU4clr<- data.frame(t(data.frame(otu_table(ps))))
+row.names(OTU4clr) <- gsub("\\.", "", row.names(OTU4clr))
+OTUs.clr <- codaSeq.clr(OTU4clr + 0.5, samples.by.row=TRUE)
+OTU2 <- otu_table(as.matrix(OTUs.clr), taxa_are_rows = FALSE)
+
+metatable2<-metatable
+row.names(metatable2) <- gsub("-", "", row.names(metatable2))
+META2<- sample_data(metatable2)
+
+psCLR <- phyloseq(OTU2,taxon,META2)
+```
+
+PCA for all the samples
+```{r}
+#remove pumice stones samples
+psCLR_RS1 <-  subset_samples(psCLR, LandUse != "p" ) 
+
+OTU<- data.frame(otu_table(psCLR_RS1))
+metaF <- metatable2[row.names(metatable2) %in% row.names(OTU),]
+
+adonis2(vegdist(OTU , method = "euclidean") ~ SS, data = metaF)
+adonis2(vegdist(OTU , method = "euclidean") ~ Month, data = metaF)
+```
+
+PCA for all the samples
+```{r}
+distmat<- vegdist(OTU, method = "euclidean") 
+
+PC <- princomp(distmat)
+library("factoextra")
+fviz_eig(PC, geom = "bar", bar_width = 0.4) + ggtitle("")
+```
+Plot
+```{r}
+metaF$id<- row.names(metaF)
+metaF <- metaF[match(names(PC$scale), metaF$id),]
+ggbiplot(PC, var.axes = FALSE, obs.scale = 1, groups = metaF$Month) +theme_bw()+scale_color_manual(values=c("#332288", "#44AA99", "#88CCEE", "#882255", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF"), name = "") + geom_point(aes(color=metaF$Month,size = 4))+ theme(text = element_text(size=14)) +ggtitle("") + scale_size_identity()  
+```
+
+## Other diversity indexes
+```{r}
+GP <- prune_species(speciesSums(ps) > 0, ps)
+
+plot_richness(GP, x=SS, measures = c("Chao1", "Shannon"))
+```
+
