@@ -118,6 +118,8 @@ ps = merge_phyloseq(phyloseq, taxon, Meta_final)
 ```
 
 ## Prevalence
+Is a measurement which describes in how many samples certain microbes are detected
+
 ```{r}
 prevdf = apply(X = otu_table(ps),
                 MARGIN = ifelse(taxa_are_rows(ps), yes = 1, no = 2),
@@ -343,12 +345,42 @@ PC <- princomp(distmat)
 library("factoextra")
 fviz_eig(PC, geom = "bar", bar_width = 0.4) + ggtitle("")
 ```
-Plot
+
+Plot with colors indicating month
 ```{r}
 metaF$id<- row.names(metaF)
 metaF <- metaF[match(names(PC$scale), metaF$id),]
-ggbiplot(PC, var.axes = FALSE, obs.scale = 1, groups = metaF$Month) +theme_bw()+scale_color_manual(values=c("#332288", "#44AA99", "#88CCEE", "#882255", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF"), name = "") + geom_point(aes(color=metaF$Month,size = 4))+ theme(text = element_text(size=14)) +ggtitle("") + scale_size_identity()  
+pMonth<-ggbiplot(PC, var.axes = FALSE, obs.scale = 1, groups = metaF$Month) +theme_bw()+scale_color_manual(labels = c("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"), values=c("#332288", "#44AA99", "#88CCEE", "#882255", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF"), name = "") + geom_point(aes(color=metaF$Month,size = 4))+ theme(text = element_text(size=14)) +ggtitle("") + scale_size_identity()
+
+pMonth
 ```
+
+Plot with colors indicating Area
+```{r}
+metaF$id<- row.names(metaF)
+metaF <- metaF[match(names(PC$scale), metaF$id),]
+parea<-ggbiplot(PC, var.axes = FALSE, obs.scale = 1, groups = metaF$Area) +theme_bw()+scale_color_manual(labels = c("Tancha", "Ogimi", "Ginowan", "Nago"), values=c("#332288", "#44AA99", "#FFCC00", "#CC6677"), name = "") + geom_point(aes(color=metaF$Area,size = 4))+ theme(text = element_text(size=14)) +ggtitle("") + scale_size_identity()
+
+parea
+```
+
+Plot with colors indicating SS
+```{r}
+metaF$id<- row.names(metaF)
+metaF <- metaF[match(names(PC$scale), metaF$id),]
+pSS<-ggbiplot(PC, var.axes = FALSE, obs.scale = 1, groups = metaF$SS) +theme_bw()+scale_color_manual(values=c("#332288", "#44AA99", "#88CCEE", "#882255","#222255", "#CCEEFF", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE"), name = "") + geom_point(aes(color=metaF$SS,size = 4))+ theme(text = element_text(size=14)) +ggtitle("") + scale_size_identity()
+
+pSS
+```
+
+
+
+
+
+
+
+
+
 
 ## Other diversity indexes
 ```{r}
