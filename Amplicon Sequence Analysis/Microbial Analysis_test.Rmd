@@ -239,6 +239,55 @@ generalbarplotD1
 ```
 
 It is clear that some phylla like Epsilonbacteraerota, Firmicutes, Patescibacteria are more present in urban areas than rural ones but it is this tendency the same trough the whole year?
+
+Here the plots with all the data
+
+```{r}
+#filter only data from Rural sites
+psDNA_rural<- subset_samples(glomD1, LandUse == "R")
+
+colours= c("#332288", "#44AA99", "#88CCEE", "#882255", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#570D32", "#E48F1B", "#FFCCCC","#D33B44","#1d3554")
+
+montlybarruralD1<-plot_bar(psDNA_rural, x= "date", fill = "D1",facet_grid= ~SS) +  
+  scale_y_continuous(expand = c(0, 0)) + 
+  ggtitle("") + 
+  scale_fill_manual(values=colours ) + 
+  scale_x_discrete(labels=date)+ 
+  theme(legend.title=element_blank()) + 
+  geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +
+  theme_classic() + 
+  theme(text = element_text(size=12))+
+  theme(axis.text.x = element_text(angle = 90)) + 
+  facet_grid(~SS,scales="free") + 
+  xlab("Sample") +ylab("Relative Abundance(%)") + 
+  theme(text = element_text(size=14))
+
+
+montlybarruralD1+ theme(legend.position="none")
+
+#filter only data from Urban sites
+psDNA_urban<- subset_samples(glomD1, LandUse == "U")
+
+colours= c("#332288", "#44AA99", "#88CCEE", "#882255", "#FFCC00", "#CC6677", "#EE3377", "#7F8E39", "#AA4499", "#BBCCEE", "#222255", "#CCEEFF", "#570D32", "#E48F1B", "#FFCCCC","#D33B44","#1d3554")
+
+montlybarurbanD1<-plot_bar(psDNA_urban, x= "date", fill = "D1",facet_grid= ~SS) +  
+  scale_y_continuous(expand = c(0, 0)) + 
+  ggtitle("") + 
+  scale_fill_manual(values=colours ) + 
+  scale_x_discrete(labels=date)+ 
+  theme(legend.title=element_blank()) + 
+  geom_bar(aes(fill=D1), stat="identity", position="stack", width =0.9) +
+  theme_classic() + 
+  theme(text = element_text(size=12))+
+  theme(axis.text.x = element_text(angle = 90)) + 
+  facet_grid(~SS,scales="free") + 
+  xlab("Sample") +ylab("Relative Abundance(%)") + 
+  theme(text = element_text(size=14))
+
+
+montlybarurbanD1+ theme(legend.position="none")
+```
+
 Let's check for different months:
 ```{r}
 #We need to repeat some steps from before so I'll skip the explanations. We just need to change the number when subsetting the month so we can get a plot from each month
