@@ -12,6 +12,8 @@ output:
   pdf_document:
     toc: yes
     toc_depth: '5'
+editor_options: 
+  chunk_output_type: inline
 ---
 
 ```{r setup, include=FALSE}
@@ -37,7 +39,7 @@ library("grid")
 library(jcolors)
 library("dplyr")
 library("breakaway")
-library("CoDaSeq")
+#library("CoDaSeq")
 library("ggbiplot")
 library("intrval")
 library("tidyverse")
@@ -118,7 +120,7 @@ ps = merge_phyloseq(phyloseq, taxon, Meta_final)
 ```
 
 ## Prevalence
-Is a measurement which describes in how many samples certain microbes are detected
+Describes in how many samples certain phylla are detected
 
 ```{r}
 prevdf = apply(X = otu_table(ps),
@@ -160,19 +162,19 @@ mean(csumdf$csums)
 
 #Import denoising stats for both sequencing runs and merge them into one table:
 #RSJ1denoise <- read.table("16S_denoisingData.tsv", header = TRUE)
-denoise <- read.table("16S_denoisingData.tsv", header = TRUE)
+#denoise <- read.table("16S_denoisingData.tsv", header = TRUE)
 #denoise<- rbind(RSJ1denoise,Junedenoise)
 
 #numbers before denoise
-sum(denoise$input)
-min(denoise$input)
-max(denoise$input)
-mean(denoise$input)
+#sum(denoise$input)
+#min(denoise$input)
+#max(denoise$input)
+#mean(denoise$input)
 #numbers after denoise
-sum(denoise$non.chimeric)
-min(denoise$non.chimeric)
-max(denoise$non.chimeric)
-mean(denoise$non.chimeric)
+#sum(denoise$non.chimeric)
+#min(denoise$non.chimeric)
+#max(denoise$non.chimeric)
+#mean(denoise$non.chimeric)
 ```
 ## Relative abundance plots
 Keep the taxa that are abundant enough to be visible in relative abundance plot:
@@ -263,7 +265,8 @@ montlybarruralD1<-plot_bar(psDNA_rural, x= "date", fill = "D1",facet_grid= ~SS) 
   theme(text = element_text(size=14))
 
 
-montlybarruralD1+ theme(legend.position="none")
+montlybarruralD1
++ theme(legend.position="none")
 
 #filter only data from Urban sites
 psDNA_urban<- subset_samples(glomD1, LandUse == "U")
