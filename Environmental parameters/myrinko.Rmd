@@ -1,0 +1,131 @@
+---
+title: "RINKO"
+author: "Ares, A."
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  word_document:
+    toc: yes
+    toc_depth: '5'
+  pdf_document:
+    toc: yes
+    toc_depth: '5'
+  html_document:
+    number_sections: yes
+    theme: cerulean
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+This document describes the procedures for data cleaning and wrangling of data collected with RINKO logger during the DNA monitoring project. RINKO is a profiler use to collect physicochemical parameters of sea and freshwater including depth, temperature, chlorophyll, conductivity, salinity, DO and turbidity. 
+
+## Remove outliers
+Usually, first seconds of collection are very unstable so we need to remove them in order to continue with the analysis. 
+There is one .csv file per day and site of sampling. 
+I will use Ayse's code for this part.
+
+```{r packages}
+#load packages
+library(dplyr)
+library(tibble)
+library(readxl)
+library(matrixStats)
+#library(xlsx) problem with JAVA, so I will try openxlsx package
+library(openxlsx)
+library(purrr)
+library(stringr)
+```
+
+We need to define the new name of the columns
+```{r colnames}
+# original column names
+cols_eng <- c("Date", "Location", "Time", "Depth (m)", "Water temperature (?C)", 
+              "Salinity", "Conductivity (mS/cm)", 
+              "EC25 (??S/cm)", "Density (kg/m^3)", "??T", 
+              "Chl-Flu (ppb)", "Chl-a (??g/l)", "Turbidity range (FTU)",
+              "DO (%)", "Weiss-DO (mg/l)", "Voltage (V)", 
+              "G&G-DO (mg/l)", "B&K-DO (mg/l)")  
+
+# the desired columns' names
+# id: the name of the file the data came from.
+vars <- c("id", "date", "location", "sample", "time", 
+          "depth", "water_temp", 
+          "salinity", "conductivity", 
+          "ec25", "density", "sT", 
+          "chl_f", "chl_a", "tur_range",
+          "do", "weiss_do", "v", 
+          "gg_do", "bk_do") 
+
+print(vars[c(2, 5, 6:20)])
+
+```
+
+```{r remove outliers}
+
+remove_outliers_column <- function (a) {
+  b <- as.matrix(a)
+  qnt <- colQuantiles(b, probs=c(.25, .75), na.rm = TRUE)
+  # print(qnt)
+  H <- 1.5 * IQR(b, na.rm = TRUE)
+  # print(H)
+  low <- qnt[1] - H
+  up <- qnt[2] + H
+  
+  b[a < low] <- NA
+  b[a > up] <- NA
+  
+  b <- as.data.frame(b)
+  b 
+}
+```
+
+
+```{r}
+rinko_folder <- "~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data R/"
+rinko_csv_files <- 
+  list.files(path = rinko_folder, recursive= TRUE, pattern = "*.csv", full.names=TRUE)
+print(rinko_csv_files)
+
+```
+
+```{r}
+test1<- read.csv("~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data R/1. Sept17/202009170937_Ｕ１Ｓ-ASTD152-ALC-R02_0264_093747.csv", skip= 44)
+remove_out<- sapply(test1[, 3:17], remove_outliers_column)
+
+```
+
+```{r}
+for (i in rinko_csv_files){
+  csv_file<-read.csv(i, skip = 44)
+   out_removed <- sapply(csv_file[, 3:17], remove_outliers_column) %>%
+    bind_cols()
+  out_removed_id <- bind_cols(csv_file[1:2], out_removed)
+  colnames(out_removed_id) <- vars[c(2, 5, 6:20)]
+
+  folder <- "~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data clean/"
+  new_name <- paste(folder, i, sep = "")
+  print(new_name)
+  
+  out_removed_id <- as.data.frame(out_removed_id)
+  print(nrow(out_removed_id))
+  
+  write.xlsx(out_removed_id, new_name, colNames = TRUE, rowNames = FALSE)
+}
+
+```
+
+```{r}
+rinko_outliers_removed <- "~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data clean/"
+```
+
+```{r}
+# list of excel files to loop through and bind together
+rinko_csv_no_outliers <- 
+  list.files(path = rinko_outliers_removed, recursive = TRUE, pattern = "*.csv")
+print(rinko_csv_no_outliers)
+```
+
