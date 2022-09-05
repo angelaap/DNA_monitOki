@@ -40,7 +40,7 @@ library(purrr)
 library(stringr)
 ```
 
-We need to define the new name of the columns
+The name of the columns need to be re-defined
 ```{r colnames}
 # original column names
 cols_eng <- c("Date", "Location", "Time", "Depth (m)", "Water temperature (?C)", 
@@ -64,6 +64,7 @@ print(vars[c(2, 5, 6:20)])
 
 ```
 
+When using Rinko, data tend to be unstable the first seconds of the measurement, therefore we need to define a function to remove the outliers at the beginning of this measurement. 
 ```{r remove outliers}
 
 remove_outliers_column <- function (a) {
@@ -83,9 +84,9 @@ remove_outliers_column <- function (a) {
 }
 ```
 
-
+Check all the files included in the 26 folders (each for each sampling day). In each of the folders there are 12 files (format .csv) each for each sampled site
 ```{r}
-rinko_folder <- "~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data R/"
+rinko_folder <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data python mining/"
 rinko_csv_files <- 
   list.files(path = rinko_folder, recursive= TRUE, pattern = "*.csv", full.names=TRUE)
 print(rinko_csv_files)
@@ -93,7 +94,7 @@ print(rinko_csv_files)
 ```
 
 ```{r}
-test1<- read.csv("~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data R/1. Sept17/202009170937_Ｕ１Ｓ-ASTD152-ALC-R02_0264_093747.csv", skip= 44)
+test1<- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data python mining/1. Sept17/202009171550_Ｒ２Ｃ-ASTD152-ALC-R02_0264_155041.csv", skip= 44)
 remove_out<- sapply(test1[, 3:17], remove_outliers_column)
 
 ```
