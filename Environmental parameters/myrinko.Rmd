@@ -89,25 +89,53 @@ Check all the files included in the 26 folders (each for each sampling day). In 
 rinko_folder <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data python mining/"
 rinko_csv_files <- 
   list.files(path = rinko_folder, recursive= TRUE, pattern = "*.csv", full.names=TRUE)
-print(rinko_csv_files)
-
+print (rinko_csv_files)
+```
+ 
+A quick test to check if the function works
+```{r}
+test1<- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data python mining/1. Sept17/202009171550_Ｒ２Ｃ-ASTD152-ALC-R02_0264_155041.csv", skip= 44)
+colnames(test1) <- vars[c(2, 5, 6:20)]
+remove_out<- sapply(test1 [ ,3:17], remove_outliers_column)%>%
+  bind_cols()
 ```
 
 ```{r}
-test1<- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data python mining/1. Sept17/202009171550_Ｒ２Ｃ-ASTD152-ALC-R02_0264_155041.csv", skip= 44)
-remove_out<- sapply(test1[, 3:17], remove_outliers_column)
+path_out <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
+fileName <- paste(path_out, gsub('.csv', '_processed.csv', f))
+write.csv(out_removed_id,fileName)
+```
 
+```{r}
+for (f in rinko_csv_files) {
+  df <- read.csv(f, skip = 44)
+  out_removed <- sapply(df [ ,3:17], remove_outliers_column) %>%
+   bind_cols()
+  out_removed_id <- bind_cols(df[1:2], out_removed)
+  colnames(out_removed_id) <- vars[c(2, 5, 6:20)]
+  
+  #folder <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
+  #new_name <- paste(folder, f, sep = "")
+  #print(new_name)
+  
+  #out_removed_id <- as.data.frame(out_removed_id)
+  #print(nrow(out_removed_id))
+  path_out <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
+  fileName <- paste(path_out, gsub('.csv', '_processed.csv', f))
+  write.csv(out_removed_id,file.path(path, "my_file.csv"))
+  #write.csv(out_removed_id, gsub('.csv', '_processed.csv', f))
+}
 ```
 
 ```{r}
 for (i in rinko_csv_files){
   csv_file<-read.csv(i, skip = 44)
-   out_removed <- sapply(csv_file[, 3:17], remove_outliers_column) %>%
-    bind_cols()
+   out_removed <- sapply(csv_file  [ ,3:17], remove_outliers_column) %>%
+   bind_cols()
   out_removed_id <- bind_cols(csv_file[1:2], out_removed)
   colnames(out_removed_id) <- vars[c(2, 5, 6:20)]
 
-  folder <- "~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data clean/"
+  folder <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
   new_name <- paste(folder, i, sep = "")
   print(new_name)
   
@@ -116,7 +144,6 @@ for (i in rinko_csv_files){
   
   write.xlsx(out_removed_id, new_name, colNames = TRUE, rowNames = FALSE)
 }
-
 ```
 
 ```{r}
