@@ -106,6 +106,7 @@ fileName <- paste(path_out, gsub('.csv', '_processed.csv', f))
 write.csv(out_removed_id,fileName)
 ```
 
+Loop to clean the files: remove the first rows, remove the outliers, etc...
 ```{r}
 for (f in rinko_csv_files) {
   df <- read.csv(f, skip = 44)
@@ -113,47 +114,43 @@ for (f in rinko_csv_files) {
    bind_cols()
   out_removed_id <- bind_cols(df[1:2], out_removed)
   colnames(out_removed_id) <- vars[c(2, 5, 6:20)]
-  
-  #folder <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
-  #new_name <- paste(folder, f, sep = "")
-  #print(new_name)
-  
-  #out_removed_id <- as.data.frame(out_removed_id)
-  #print(nrow(out_removed_id))
-  path_out <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
-  fileName <- paste(path_out, gsub('.csv', '_processed.csv', f))
-  write.csv(out_removed_id,file.path(path, "my_file.csv"))
-  #write.csv(out_removed_id, gsub('.csv', '_processed.csv', f))
+
+  write.csv(out_removed_id, gsub('.csv', '_processed.csv', f))
 }
 ```
 
-```{r}
-for (i in rinko_csv_files){
-  csv_file<-read.csv(i, skip = 44)
-   out_removed <- sapply(csv_file  [ ,3:17], remove_outliers_column) %>%
-   bind_cols()
-  out_removed_id <- bind_cols(csv_file[1:2], out_removed)
-  colnames(out_removed_id) <- vars[c(2, 5, 6:20)]
-
-  folder <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
-  new_name <- paste(folder, i, sep = "")
-  print(new_name)
-  
-  out_removed_id <- as.data.frame(out_removed_id)
-  print(nrow(out_removed_id))
-  
-  write.xlsx(out_removed_id, new_name, colNames = TRUE, rowNames = FALSE)
-}
-```
 
 ```{r}
-rinko_outliers_removed <- "~/Documents/Projects OIST/RS/DNA year monitoring project/Rinko/Rinko data clean/"
-```
+# path to the separate folder that has the outlier-replaced-with-NA excel files
+rinko_outliers_removed <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Clean files/"
 
-```{r}
-# list of excel files to loop through and bind together
+# list of csv files to loop through and bind together
 rinko_csv_no_outliers <- 
   list.files(path = rinko_outliers_removed, recursive = TRUE, pattern = "*.csv")
 print(rinko_csv_no_outliers)
+
+readBind <- function (x){
+  read.csv(x)
+}
+
+#Adding a column with ID information
+setwd("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Clean files")
+all_outliers_removed <- sapply(rinko_csv_no_outliers, readBind, simplify=FALSE) %>%
+  bind_rows(.id = "id") %>% 
+
+#Adding a column with ID information
+  mutate(location = substring(str_extract(id, "/..."), 2, 3)) %>%
+  relocate(location, .after = date) %>% 
+  
+  mutate(sample = substring(str_extract(id, "/..."), 2, 4)) %>%
+  relocate(sample, .after = location)
+
+# for some reason needs to be a dataframe to write an excel file with row.names = FALSE
+write_all_out_removed <- as.data.frame(all_outliers_removed) 
+write.xlsx(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed.xls", 
+           colNames = TRUE, rowNames = FALSE)
+
+View(all_outliers_removed)
+nrow(all_outliers_removed)
 ```
 
