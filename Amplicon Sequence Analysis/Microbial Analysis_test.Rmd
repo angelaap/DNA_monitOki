@@ -50,7 +50,7 @@ set.seed(1)
 
 
 Loading the data
-```{r}
+```{r, loading}
 setwd("~/Documents/GitHub/DNA_monitOki/Amplicon Sequence Analysis")
 phyloseq<-qza_to_phyloseq(features="merged_table.qza")
 ```
