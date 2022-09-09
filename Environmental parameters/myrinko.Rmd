@@ -1,24 +1,21 @@
 ---
-title: "RINKO"
-author: "Ares, A."
-date: "`r format(Sys.time(), '%B %d, %Y')`"
+title: "Rinko data"
+author: "Angela Ares"
+date: '`r format(Sys.Date(), "%b %d, %Y")`'
 output:
-  word_document:
-    toc: yes
-    toc_depth: '5'
-  pdf_document:
-    toc: yes
-    toc_depth: '5'
   html_document:
-    number_sections: yes
-    theme: cerulean
-    toc: yes
-    toc_depth: 5
-    toc_float: yes
+    code_folding: hide
+    df_print: paged
+    toc: true
+    theme: cosmo
+  word_document: default
+  pdf_document: default
+editor_options: 
+  chunk_output_type: inline
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
 This document describes the procedures for data cleaning and wrangling of data collected with RINKO logger during the DNA monitoring project. RINKO is a profiler use to collect physicochemical parameters of sea and freshwater including depth, temperature, chlorophyll, conductivity, salinity, DO and turbidity. 
@@ -108,14 +105,14 @@ write.csv(out_removed_id,fileName)
 
 Loop to clean the files: remove the first rows, remove the outliers, etc...
 ```{r}
-for (f in rinko_csv_files) {
-  df <- read.csv(f, skip = 44)
+for (filecsv in rinko_csv_files) {
+  df <- read.csv(filecsv, skip = 44)
   out_removed <- sapply(df [ ,3:17], remove_outliers_column) %>%
    bind_cols()
   out_removed_id <- bind_cols(df[1:2], out_removed)
   colnames(out_removed_id) <- vars[c(2, 5, 6:20)]
 
-  write.csv(out_removed_id, gsub('.csv', '_processed.csv', f))
+  write.csv(out_removed_id, gsub('.csv', '_processed.csv', filecsv))
 }
 ```
 
