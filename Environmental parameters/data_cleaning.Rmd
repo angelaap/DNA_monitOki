@@ -151,3 +151,4 @@ View(all_outliers_removed)
 nrow(all_outliers_removed)
 ```
 
+Acordarse de hacer el de Sep 21!!!!
