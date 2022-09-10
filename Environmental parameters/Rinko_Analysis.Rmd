@@ -59,100 +59,16 @@ mean_sd_rinko$location<- gsub('Ｒ１', 'R1',
 mean_sd_rinko$location<- gsub('Ｒ１Ｃ', 'R1C',
            gsub('Ｒ１Ｎ', 'R1N',
            gsub('Ｒ１Ｓ', 'R1S', 
-           gsub('Ｒ１Ｓ', 'R1S', 
-           gsub('Ｒ１Ｓ', 'R1S', 
-           gsub('Ｒ１Ｓ', 'R1S',       
-                
-           gsub('Ｕ２', 'U2', mean_sd_rinko$location))))
+           gsub('Ｒ２Ｃ', 'R2C', 
+           gsub('Ｒ２Ｎ', 'R2N', 
+           gsub('Ｒ２Ｓ', 'R2S',       
+           gsub('Ｕ１Ｃ', 'U1C', 
+           gsub('Ｕ１Ｎ', 'U1N',
+           gsub('Ｕ１Ｓ', 'U1S',
+           gsub('Ｕ２Ｃ', 'U2C',
+           gsub('Ｕ２Ｎ', 'U2N',
+           gsub('Ｕ２Ｓ', 'U2S', mean_sd_rinko$location))))))))))))
 ```
 
-When using Rinko, data tend to be unstable the first seconds of the measurement, therefore we need to define a function to remove the outliers at the beginning of this measurement. 
-```{r remove outliers}
-
-remove_outliers_column <- function (a) {
-  b <- as.matrix(a)
-  qnt <- colQuantiles(b, probs=c(.25, .75), na.rm = TRUE)
-  # print(qnt)
-  H <- 1.5 * IQR(b, na.rm = TRUE)
-  # print(H)
-  low <- qnt[1] - H
-  up <- qnt[2] + H
-  
-  b[a < low] <- NA
-  b[a > up] <- NA
-  
-  b <- as.data.frame(b)
-  b 
-}
-```
-
-Check all the files included in the 26 folders (each for each sampling day). In each of the folders there are 12 files (format .csv) each for each sampled site
-```{r}
-rinko_folder <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data python mining/"
-rinko_csv_files <- 
-  list.files(path = rinko_folder, recursive= TRUE, pattern = "*.csv", full.names=TRUE)
-print (rinko_csv_files)
-```
- 
-A quick test to check if the function works
-```{r}
-test1<- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data python mining/1. Sept17/202009171550_Ｒ２Ｃ-ASTD152-ALC-R02_0264_155041.csv", skip= 44)
-colnames(test1) <- vars[c(2, 5, 6:20)]
-remove_out<- sapply(test1 [ ,3:17], remove_outliers_column)%>%
-  bind_cols()
-```
-
-```{r}
-path_out <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Rinko data clean/"
-fileName <- paste(path_out, gsub('.csv', '_processed.csv', f))
-write.csv(out_removed_id,fileName)
-```
-
-Loop to clean the files: remove the first rows, remove the outliers, etc...
-```{r}
-for (filecsv in rinko_csv_files) {
-  df <- read.csv(filecsv, skip = 44)
-  out_removed <- sapply(df [ ,3:17], remove_outliers_column) %>%
-   bind_cols()
-  out_removed_id <- bind_cols(df[1:2], out_removed)
-  colnames(out_removed_id) <- vars[c(2, 5, 6:20)]
-
-  write.csv(out_removed_id, gsub('.csv', '_processed.csv', filecsv))
-}
-```
-
-
-```{r}
-# path to the separate folder that has the outlier-replaced-with-NA excel files
-rinko_outliers_removed <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Clean files/"
-
-# list of csv files to loop through and bind together
-rinko_csv_no_outliers <- 
-  list.files(path = rinko_outliers_removed, recursive = TRUE, pattern = "*.csv")
-print(rinko_csv_no_outliers)
-
-readBind <- function (x){
-  read.csv(x)
-}
-
-#Adding a column with ID information
-setwd("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Clean files")
-all_outliers_removed <- sapply(rinko_csv_no_outliers, readBind, simplify=FALSE) %>%
-  bind_rows(.id = "id") %>% 
-
-#Adding a column with ID information
-  mutate(location = substring(str_extract(id, "/..."), 2, 3)) %>%
-  relocate(location, .after = date) %>% 
-  
-  mutate(sample = substring(str_extract(id, "/..."), 2, 4)) %>%
-  relocate(sample, .after = location)
-
-# for some reason needs to be a dataframe to write an excel file with row.names = FALSE
-write_all_out_removed <- as.data.frame(all_outliers_removed) 
-write.xlsx(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed.xls", 
-           colNames = TRUE, rowNames = FALSE)
-
-View(all_outliers_removed)
-nrow(all_outliers_removed)
-```
+## Temperature
 
