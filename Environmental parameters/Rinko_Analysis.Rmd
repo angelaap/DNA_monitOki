@@ -18,47 +18,52 @@ editor_options:
 knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
-This document describes the procedures for data cleaning and wrangling of data collected with RINKO logger during the DNA monitoring project. RINKO is a profiler use to collect physicochemical parameters of sea and freshwater including depth, temperature, chlorophyll, conductivity, salinity, DO and turbidity. 
+This document describes the RINKO data analysis and visualization. 
 
-## Remove outliers
-Usually, first seconds of collection are very unstable so we need to remove them in order to continue with the analysis. 
-There is one .csv file per day and site of sampling. 
-I will use Ayse's code for this part.
+## Read data
 
 ```{r packages}
 #load packages
 library(dplyr)
-library(tibble)
+library(ggplot2)
 library(readxl)
-library(matrixStats)
-#library(xlsx) problem with JAVA, so I will try openxlsx package
-library(openxlsx)
-library(purrr)
-library(stringr)
 ```
 
 The name of the columns need to be re-defined
-```{r colnames}
-# original column names
-cols_eng <- c("Date", "Location", "Time", "Depth (m)", "Water temperature (?C)", 
-              "Salinity", "Conductivity (mS/cm)", 
-              "EC25 (??S/cm)", "Density (kg/m^3)", "??T", 
-              "Chl-Flu (ppb)", "Chl-a (??g/l)", "Turbidity range (FTU)",
-              "DO (%)", "Weiss-DO (mg/l)", "Voltage (V)", 
-              "G&G-DO (mg/l)", "B&K-DO (mg/l)")  
+```{r read data}
+# load xls file
+rinkototal <- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed.csv")
 
-# the desired columns' names
-# id: the name of the file the data came from.
-vars <- c("id", "date", "location", "sample", "time", 
-          "depth", "water_temp", 
-          "salinity", "conductivity", 
-          "ec25", "density", "sT", 
-          "chl_f", "chl_a", "tur_range",
-          "do", "weiss_do", "v", 
-          "gg_do", "bk_do") 
+#remove unwanted col
+less_col<- rinkototal[ , -c(1,2,6,7,18:21)]
 
-print(vars[c(2, 5, 6:20)])
+# calculate mean and sd of all the samples by day and sampling site
 
+mean_sd_rinko<- less_col %>%
+  group_by(date, location, sample) %>%
+  summarise(across(
+    .cols = is.numeric, 
+    .fns = list(Mean = mean, SD = sd), na.rm = TRUE, 
+    .names = "{col}_{fn}"
+    ))
+
+#substitute strings with different patterns
+#in the location column
+
+mean_sd_rinko$location<- gsub('Ｒ１', 'R1',
+           gsub('Ｒ２', 'R2',
+           gsub('Ｕ１', 'U1', 
+           gsub('Ｕ２', 'U2', mean_sd_rinko$location))))
+
+#in the sample column
+mean_sd_rinko$location<- gsub('Ｒ１Ｃ', 'R1C',
+           gsub('Ｒ１Ｎ', 'R1N',
+           gsub('Ｒ１Ｓ', 'R1S', 
+           gsub('Ｒ１Ｓ', 'R1S', 
+           gsub('Ｒ１Ｓ', 'R1S', 
+           gsub('Ｒ１Ｓ', 'R1S',       
+                
+           gsub('Ｕ２', 'U2', mean_sd_rinko$location))))
 ```
 
 When using Rinko, data tend to be unstable the first seconds of the measurement, therefore we need to define a function to remove the outliers at the beginning of this measurement. 
