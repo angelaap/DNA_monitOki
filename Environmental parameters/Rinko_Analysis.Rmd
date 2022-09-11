@@ -74,7 +74,7 @@ mean_sd_rinko<- mean_sd_rinko %>%
   mutate(Position = case_when(
     endsWith(sample, "C") ~ "C",
     endsWith(sample, "S") ~ "S",
-    endsWith(sample, "N") ~ "C"
+    endsWith(sample, "N") ~ "N"
     ))
 
 #reorganize columns 
@@ -84,11 +84,36 @@ mean_sd_rinko <- mean_sd_rinko[, c(1, 2, 3, 24, 4:23)]
 ## EDA variables 
 
 Water temp
-```{r}
+```{r temperature}
 #At different SS, so we can see differences in position
+Poscol<- c("#264653", "#8AB17D","#E76F51")
+temp_pos<-ggplot(mean_sd_rinko, aes(x=date, y=water_temp_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Water temperature (°C)") +xlab("") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
-temp_all_p <- ggplot(mean_sd_rinko, aes(x=date, y=water_temp_Mean, color=Position)) +  facet_wrap(~ location, scales="free" )+ geom_point(size=3) + theme_bw() + theme(text = element_text(size=12)) +ylab("Water temperature (°C)") +xlab("") + theme(text = element_text(size=18)) + theme(legend.position="none")
+temp_pos
 
+#combine three positions of each area
+temp_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(water_temp_Mean), sd=sd(water_temp_SD))
+
+ggplot(temp_mean_pos, aes(x=date, y=Mean, colour=area, fill=area)) +
+           scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"),
+                       name="Area",
+                       breaks=c("R1", "R2", "U1", "U2"),
+                       labels=c("Tancha", "Ogimi", "Ginowan", "Nago")) +
+           scale_fill_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554")) +
+           geom_ribbon(aes(ymin = Mean - sd, ymax = Mean + sd), alpha= 0.4, colour=NA)+
+           geom_line() +
+           theme_bw() +
+           facet_grid(nutrient~area, scales="free", labeller = labeller(nutrient = nutrient.labs, area = area.labs)) +
+           theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=9)) +
+           theme(legend.position="none")
+```
+
+
+
+
+```{r salinity}
 
 ```
 
