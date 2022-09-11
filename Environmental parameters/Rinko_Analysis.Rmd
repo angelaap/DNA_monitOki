@@ -1,5 +1,5 @@
 ---
-title: "Rinko data"
+title: "Rinko analysis"
 author: "Angela Ares"
 date: '`r format(Sys.Date(), "%b %d, %Y")`'
 output:
@@ -56,7 +56,7 @@ mean_sd_rinko$location<- gsub('Ｒ１', 'R1',
            gsub('Ｕ２', 'U2', mean_sd_rinko$location))))
 
 #in the sample column
-mean_sd_rinko$location<- gsub('Ｒ１Ｃ', 'R1C',
+mean_sd_rinko$sample<- gsub('Ｒ１Ｃ', 'R1C',
            gsub('Ｒ１Ｎ', 'R1N',
            gsub('Ｒ１Ｓ', 'R1S', 
            gsub('Ｒ２Ｃ', 'R2C', 
@@ -67,8 +67,28 @@ mean_sd_rinko$location<- gsub('Ｒ１Ｃ', 'R1C',
            gsub('Ｕ１Ｓ', 'U1S',
            gsub('Ｕ２Ｃ', 'U2C',
            gsub('Ｕ２Ｎ', 'U2N',
-           gsub('Ｕ２Ｓ', 'U2S', mean_sd_rinko$location))))))))))))
+           gsub('Ｕ２Ｓ', 'U2S', mean_sd_rinko$sample))))))))))))
+
+# Adding column with position (C, N, S) based on the sample column:
+mean_sd_rinko<- mean_sd_rinko %>%
+  mutate(Position = case_when(
+    endsWith(sample, "C") ~ "C",
+    endsWith(sample, "S") ~ "S",
+    endsWith(sample, "N") ~ "C"
+    ))
+
+#reorganize columns 
+mean_sd_rinko <- mean_sd_rinko[, c(1, 2, 3, 24, 4:23)]
 ```
 
-## Temperature
+## EDA variables 
+
+Water temp
+```{r}
+#At different SS, so we can see differences in position
+
+temp_all_p <- ggplot(mean_sd_rinko, aes(x=date, y=water_temp_Mean, color=Position)) +  facet_wrap(~ location, scales="free" )+ geom_point(size=3) + theme_bw() + theme(text = element_text(size=12)) +ylab("Water temperature (°C)") +xlab("") + theme(text = element_text(size=18)) + theme(legend.position="none")
+
+
+```
 
