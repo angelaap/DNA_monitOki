@@ -87,7 +87,7 @@ Water temp
 ```{r temperature}
 #At different SS, so we can see differences in position
 Poscol<- c("#264653", "#8AB17D","#E76F51")
-temp_pos<-ggplot(mean_sd_rinko, aes(x=date, y=water_temp_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Water temperature (°C)") +xlab("") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+temp_pos<-ggplot(mean_sd_rinko, aes(x=date, y=water_temp_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Water temperature (°C)") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
 temp_pos
 
@@ -96,24 +96,37 @@ temp_mean_pos<- mean_sd_rinko %>%
     group_by(date, location) %>%
     summarize(Mean = mean(water_temp_Mean), sd=sd(water_temp_SD))
 
-ggplot(temp_mean_pos, aes(x=date, y=Mean, colour=area, fill=area)) +
-           scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"),
-                       name="Area",
-                       breaks=c("R1", "R2", "U1", "U2"),
-                       labels=c("Tancha", "Ogimi", "Ginowan", "Nago")) +
-           scale_fill_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554")) +
-           geom_ribbon(aes(ymin = Mean - sd, ymax = Mean + sd), alpha= 0.4, colour=NA)+
-           geom_line() +
-           theme_bw() +
-           facet_grid(nutrient~area, scales="free", labeller = labeller(nutrient = nutrient.labs, area = area.labs)) +
-           theme(strip.text= element_text(size = 13), strip.background =element_rect(fill="white"), text = element_text(size=9)) +
-           theme(legend.position="none")
+areacol<- c("#264653", "#2A9D8F","#E76F51", "#F4A261")
+all_temp<- ggplot(temp_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("Water temperature (°C)") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_temp
 ```
 
-
-
+Let's check the other variables
+Salinity:
 
 ```{r salinity}
+#At different SS, so we can see differences in position
+sal_pos<-ggplot(mean_sd_rinko, aes(x=date, y=salinity_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Salinity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
+sal_pos
+
+#combine three positions of each area
+sal_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(salinity_Mean), sd=sd(salinity_SD))
+
+all_sal<- ggplot(sal_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("Salinity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_sal
 ```
+
 
