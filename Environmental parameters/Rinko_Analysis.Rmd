@@ -106,9 +106,7 @@ all_temp<- ggplot(temp_mean_pos, aes(x=date, y=Mean, group=location)) +
 all_temp
 ```
 
-Let's check the other variables
-Salinity:
-
+Salinity
 ```{r salinity}
 #At different SS, so we can see differences in position
 sal_pos<-ggplot(mean_sd_rinko, aes(x=date, y=salinity_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Salinity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
@@ -129,4 +127,96 @@ all_sal<- ggplot(sal_mean_pos, aes(x=date, y=Mean, group=location)) +
 all_sal
 ```
 
+Turbidity
+```{r salinity}
+#At different SS, so we can see differences in position
+turb_pos<-ggplot(mean_sd_rinko, aes(x=date, y=tur_range_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Turbidity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
+turb_pos
+
+#combine three positions of each area
+turb_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(tur_range_Mean), sd=sd(tur_range_SD))
+
+all_turb<- ggplot(turb_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("Turbidity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_turb
+```
+
+Disolved Oxygen (DO)
+```{r DO}
+#At different SS, so we can see differences in position
+DO_pos<-ggplot(mean_sd_rinko, aes(x=date, y=do_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("DO") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+DO_pos
+
+#combine three positions of each area
+do_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(do_Mean), sd=sd(do_SD))
+
+all_DO<- ggplot(do_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("DO") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_DO
+```
+
+
+
+
+#Other parameters 
+
+Conductivity 
+Usually correlated with temperature. A decrease in the viscosity of water increases the mobility of ions in water. As such, an increase in temperature thus increases conductivity.
+```{r DO}
+#At different SS, so we can see differences in position
+Cond_pos<-ggplot(mean_sd_rinko, aes(x=date, y=conductivity_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Conductivity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+Cond_pos
+
+#combine three positions of each area
+Cond_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(conductivity_Mean), sd=sd(conductivity_SD))
+
+all_Cond<- ggplot(Cond_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("Conductivity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_Cond
+```
+
+
+Density
+Usually inversed correlation with temperature.
+But it is also dependent on the salinity. In this case, central points from urban areas show low density levels because of the high volume of freshwater that is carried by the main stream.
+
+```{r DO}
+#At different SS, so we can see differences in position
+Dens_pos<-ggplot(mean_sd_rinko, aes(x=date, y=density_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Density") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+Dens_pos
+
+#combine three positions of each area
+Dens_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(density_Mean), sd=sd(density_SD))
+
+all_Dens<- ggplot(Dens_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("Density") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_Dens
+```
