@@ -83,7 +83,7 @@ mean_sd_rinko <- mean_sd_rinko[, c(1, 2, 3, 24, 4:23)]
 
 ## EDA main variables 
 
-Water temp
+**Water temp**
 ```{r temperature}
 #At different SS, so we can see differences in position
 Poscol<- c("#264653", "#8AB17D","#E76F51")
@@ -106,7 +106,7 @@ all_temp<- ggplot(temp_mean_pos, aes(x=date, y=Mean, group=location)) +
 all_temp
 ```
 
-Salinity
+**Salinity**
 ```{r salinity}
 #At different SS, so we can see differences in position
 sal_pos<-ggplot(mean_sd_rinko, aes(x=date, y=salinity_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Salinity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
@@ -127,8 +127,8 @@ all_sal<- ggplot(sal_mean_pos, aes(x=date, y=Mean, group=location)) +
 all_sal
 ```
 
-Turbidity
-```{r salinity}
+**Turbidity**
+```{r turbidity}
 #At different SS, so we can see differences in position
 turb_pos<-ggplot(mean_sd_rinko, aes(x=date, y=tur_range_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Turbidity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
@@ -148,7 +148,7 @@ all_turb<- ggplot(turb_mean_pos, aes(x=date, y=Mean, group=location)) +
 all_turb
 ```
 
-Disolved Oxygen (DO)
+**Disolved Oxygen (DO)**
 ```{r DO}
 #At different SS, so we can see differences in position
 DO_pos<-ggplot(mean_sd_rinko, aes(x=date, y=do_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("DO") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
@@ -169,29 +169,8 @@ all_DO<- ggplot(do_mean_pos, aes(x=date, y=Mean, group=location)) +
 all_DO
 ```
 
-Disolved Oxygen (DO)
-```{r DO}
-#At different SS, so we can see differences in position
-DO_pos<-ggplot(mean_sd_rinko, aes(x=date, y=do_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("DO") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
-
-DO_pos
-
-#combine three positions of each area
-do_mean_pos<- mean_sd_rinko %>% 
-    group_by(date, location) %>%
-    summarize(Mean = mean(do_Mean), sd=sd(do_SD))
-
-all_DO<- ggplot(do_mean_pos, aes(x=date, y=Mean, group=location)) +
-           geom_point(aes(color=location)) +
-           geom_line(aes(color=location)) +
-           scale_colour_manual(values = areacol) +
-           theme_bw()+ ylab("DO") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
-
-all_DO
-```
-
-Chlorophyll f
-```{r DO}
+**Chlorophyll f**
+```{r ChlF}
 #At different SS, so we can see differences in position
 ChlF_pos<-ggplot(mean_sd_rinko, aes(x=date, y=chl_f_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Chlorophyll f") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
@@ -211,8 +190,9 @@ all_cf<- ggplot(cf_mean_pos, aes(x=date, y=Mean, group=location)) +
 all_cf
 ```
 
-Chlorophyll f
-```{r DO}
+**Chlorophyll a**
+Exactly same values as the chlorophyll f. Look deeper into this.
+```{r ChlA}
 #At different SS, so we can see differences in position
 ChlA_pos<-ggplot(mean_sd_rinko, aes(x=date, y=chl_a_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Chlorophyll a") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
@@ -234,9 +214,9 @@ all_ca
 
 ### Other variables
 
-Conductivity 
+**Conductivity** 
 Usually correlated with temperature. A decrease in the viscosity of water increases the mobility of ions in water. As such, an increase in temperature thus increases conductivity.
-```{r DO}
+```{r Conductivity}
 #At different SS, so we can see differences in position
 Cond_pos<-ggplot(mean_sd_rinko, aes(x=date, y=conductivity_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Conductivity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
@@ -257,11 +237,11 @@ all_Cond
 ```
 
 
-Density
+**Density**
 Usually inversed correlation with temperature.
 But it is also dependent on the salinity. In this case, central points from urban areas show low density levels because of the high volume of freshwater that is carried by the main stream.
 
-```{r DO}
+```{r Density}
 #At different SS, so we can see differences in position
 Dens_pos<-ggplot(mean_sd_rinko, aes(x=date, y=density_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Density") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
 
