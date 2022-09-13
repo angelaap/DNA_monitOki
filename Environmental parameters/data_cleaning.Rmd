@@ -176,19 +176,19 @@ for (filecsv in rinko_csv_Sept) {
 }
 
 #path to the separate folder that has the outlier-replaced-with-NA excel files
-rinko_outliers_removed  <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21 clean/26. September 21/"
+rinko_outliers_removed  <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21/26. September 21/"
 
 
 # list of csv files to loop through and bind together
 rinko_sept_no_outliers <- 
-  list.files(path = rinko_outliers_removed , recursive = TRUE, pattern = "*.csv")
+  list.files(path = rinko_outliers_removed , recursive = TRUE, pattern = "*_processed.csv")
 print(rinko_sept_no_outliers)
 
 readBind <- function (x){
   read.csv(x)
 }
 
-setwd("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21 clean/26. September 21")
+setwd("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21/26. September 21")
 getwd()
 all_outliers_removed <- sapply(rinko_sept_no_outliers, readBind, simplify=FALSE) %>%
   bind_rows(.id = "id") %>% 
@@ -202,7 +202,7 @@ all_outliers_removed <- sapply(rinko_sept_no_outliers, readBind, simplify=FALSE)
 
 # for some reason needs to be a dataframe to write an excel file with row.names = FALSE
 write_all_out_removed <- as.data.frame(all_outliers_removed) 
-write.xlsx(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed.xls", 
+write.xlsx(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed_Sept.xls", 
            colNames = TRUE, rowNames = FALSE)
 
 View(all_outliers_removed)
