@@ -34,9 +34,17 @@ The name of the columns need to be re-defined
 ```{r read data}
 # load xls file
 rinkototal <- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed.csv")
+sept_rinko<- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/sept_no_outliers.csv")
+
+#make the number of the columns in both files the same
+sept_rinko[1]<- NULL
+rinkototal[21]<- NULL
+
+#join both df
+rinko_join<- rbind(rinkototal, sept_rinko)
 
 #remove unwanted col
-less_col<- rinkototal[ , -c(1,2,6,7,18:21)]
+less_col<- rinko_join[ , -c(1,2,6,7,18:20)]
 
 # calculate mean and sd of all the samples by day and sampling site
 
