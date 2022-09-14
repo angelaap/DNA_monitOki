@@ -27,6 +27,7 @@ This document describes the RINKO data analysis and visualization.
 library(dplyr)
 library(ggplot2)
 library(readxl)
+library(corrplot)
 ```
 
 The name of the columns need to be re-defined
@@ -260,3 +261,19 @@ all_Dens<- ggplot(Dens_mean_pos, aes(x=date, y=Mean, group=location)) +
 
 all_Dens
 ```
+
+
+## Correlations
+
+```{r}
+#create the matrix only with the mean values in the columns
+mean_R<- mean_sd_rinko[ , -c(1:4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24)]
+colnames(mean_R)<-  sub("*_Mean", "", colnames(mean_R))
+cor_rinko<- round(cor(mean_R),
+  digits = 2)
+
+
+corrplot.mixed(cor_rinko, order = 'AOE')
+
+```
+
