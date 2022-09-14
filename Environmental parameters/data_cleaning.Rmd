@@ -155,7 +155,7 @@ nrow(all_outliers_removed)
 ## Add September 21
 
 ```{r last tables Sept}
-rinko_sept <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21/26. September 21/"
+rinko_sept <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21/"
 rinko_csv_Sept <- 
   list.files(path = rinko_sept, recursive= TRUE, pattern = "*.csv", full.names=TRUE)
 print (rinko_csv_Sept)
@@ -174,39 +174,42 @@ for (filecsv in rinko_csv_Sept) {
 
   write.csv(out_removed_id, gsub('.csv', '_processed.csv', filecsv))
 }
+```
 
-#path to the separate folder that has the outlier-replaced-with-NA excel files
-rinko_outliers_removed  <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21/26. September 21/"
-
+Now 
+```{r}
+# path to the separate folder that has the outlier-replaced-with-NA excel files
+rinko_outliers_removed <- "~/Documents/GitHub/DNA_monitOki/Environmental parameters/Clean sept/"
 
 # list of csv files to loop through and bind together
-rinko_sept_no_outliers <- 
-  list.files(path = rinko_outliers_removed , recursive = TRUE, pattern = "*_processed.csv")
-print(rinko_sept_no_outliers)
+rinko_csv_no_outliers <- 
+  list.files(path = rinko_outliers_removed, recursive = TRUE, pattern = "*.csv")
+print(rinko_csv_no_outliers)
 
 readBind <- function (x){
   read.csv(x)
 }
 
-setwd("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Sept 21/26. September 21")
-getwd()
-all_outliers_removed <- sapply(rinko_sept_no_outliers, readBind, simplify=FALSE) %>%
+#Adding a column with ID information
+setwd("~/Documents/GitHub/DNA_monitOki/Environmental parameters/Clean sept")
+all_outliers_removed <- sapply(rinko_csv_no_outliers, readBind, simplify=FALSE) %>%
   bind_rows(.id = "id") %>% 
 
 #Adding a column with ID information
-  mutate(location = substring(str_extract(id, "/..."), 2, 3)) %>%
+  mutate(location = substring(str_extract(id, "... 20"), 1, 2)) %>%
   relocate(location, .after = date) %>% 
   
-  mutate(sample = substring(str_extract(id, "/..."), 2, 4)) %>%
+  mutate(sample = substring(str_extract(id, "... 20"), 1, 3)) %>%
   relocate(sample, .after = location)
 
 # for some reason needs to be a dataframe to write an excel file with row.names = FALSE
 write_all_out_removed <- as.data.frame(all_outliers_removed) 
-write.xlsx(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed_Sept.xls", 
+write.xlsx(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/sept_no_outliers.xls", 
            colNames = TRUE, rowNames = FALSE)
 
 View(all_outliers_removed)
 nrow(all_outliers_removed)
+```
 
 ```
 
