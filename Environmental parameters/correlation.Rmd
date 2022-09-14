@@ -1,0 +1,147 @@
+---
+title: "Rinko analysis"
+author: "Angela Ares"
+date: '`r format(Sys.Date(), "%b %d, %Y")`'
+output:
+  html_document:
+    code_folding: hide
+    df_print: paged
+    toc: true
+    theme: cosmo
+  word_document: default
+  pdf_document: default
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+This document describes the RINKO data analysis and visualization. 
+
+## Read data
+
+```{r packages}
+#load packages
+library(dplyr)
+library(ggplot2)
+library(readxl)
+library(corrplot)
+```
+
+The name of the columns need to be re-defined
+```{r read data}
+# load xls file
+rinkototal <- read.csv("~/Documents/GitHub/DNA_monitOki/Environmental parameters/rinko_all_outliers_removed.csv")
+
+#remove unwanted col
+less_col<- rinkototal[ , -c(1,2,6,7,18:21)]
+
+# calculate mean and sd of all the samples by day and sampling site
+
+mean_sd_rinko<- less_col %>%
+  group_by(date, location, sample) %>%
+  summarise(across(
+    .cols = is.numeric, 
+    .fns = list(Mean = mean, SD = sd), na.rm = TRUE, 
+    .names = "{col}_{fn}"
+    ))
+
+#substitute strings with different patterns
+#in the location column
+
+mean_sd_rinko$location<- gsub('Ｒ１', 'R1',
+           gsub('Ｒ２', 'R2',
+           gsub('Ｕ１', 'U1', 
+           gsub('Ｕ２', 'U2', mean_sd_rinko$location))))
+
+#in the sample column
+mean_sd_rinko$sample<- gsub('Ｒ１Ｃ', 'R1C',
+           gsub('Ｒ１Ｎ', 'R1N',
+           gsub('Ｒ１Ｓ', 'R1S', 
+           gsub('Ｒ２Ｃ', 'R2C', 
+           gsub('Ｒ２Ｎ', 'R2N', 
+           gsub('Ｒ２Ｓ', 'R2S',       
+           gsub('Ｕ１Ｃ', 'U1C', 
+           gsub('Ｕ１Ｎ', 'U1N',
+           gsub('Ｕ１Ｓ', 'U1S',
+           gsub('Ｕ２Ｃ', 'U2C',
+           gsub('Ｕ２Ｎ', 'U2N',
+           gsub('Ｕ２Ｓ', 'U2S', mean_sd_rinko$sample))))))))))))
+
+# Adding column with position (C, N, S) based on the sample column:
+mean_sd_rinko<- mean_sd_rinko %>%
+  mutate(Position = case_when(
+    endsWith(sample, "C") ~ "C",
+    endsWith(sample, "S") ~ "S",
+    endsWith(sample, "N") ~ "N"
+    ))
+
+#reorganize columns 
+mean_sd_rinko <- mean_sd_rinko[, c(1, 2, 3, 24, 4:23)]
+```
+
+## EDA variables 
+
+Water temp
+```{r temperature}
+#At different SS, so we can see differences in position
+Poscol<- c("#264653", "#8AB17D","#E76F51")
+temp_pos<-ggplot(mean_sd_rinko, aes(x=date, y=water_temp_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Water temperature (°C)") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+temp_pos
+
+#combine three positions of each area
+temp_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(water_temp_Mean), sd=sd(water_temp_SD))
+
+areacol<- c("#264653", "#2A9D8F","#E76F51", "#F4A261")
+all_temp<- ggplot(temp_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("Water temperature (°C)") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_temp
+```
+
+Let's check the other variables
+Salinity:
+
+```{r salinity}
+#At different SS, so we can see differences in position
+sal_pos<-ggplot(mean_sd_rinko, aes(x=date, y=salinity_Mean, color=Position)) +  facet_wrap(~ location)+ geom_point(size=3, alpha=0.8) + theme_bw() + scale_color_manual(values=Poscol)+theme(text = element_text(size=12)) +ylab("Salinity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+sal_pos
+
+#combine three positions of each area
+sal_mean_pos<- mean_sd_rinko %>% 
+    group_by(date, location) %>%
+    summarize(Mean = mean(salinity_Mean), sd=sd(salinity_SD))
+
+all_sal<- ggplot(sal_mean_pos, aes(x=date, y=Mean, group=location)) +
+           geom_point(aes(color=location)) +
+           geom_line(aes(color=location)) +
+           scale_colour_manual(values = areacol) +
+           theme_bw()+ ylab("Salinity") +xlab("Date") + theme(text = element_text(size=10), axis.text.x = element_text(angle=45, hjust=1)) 
+
+all_sal
+```
+
+## Correlations
+
+```{r}
+#create the matrix only with the mean values in the columns
+mean_R<- mean_sd_rinko[ , -c(1:4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24)]
+colnames(mean_R)<-  sub("*_Mean", "", colnames(mean_R))
+cor_rinko<- round(cor(mean_R),
+  digits = 2)
+
+
+corrplot.mixed(cor_rinko, order = 'AOE')
+
+```
+
+
