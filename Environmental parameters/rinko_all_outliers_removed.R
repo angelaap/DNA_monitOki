@@ -72,6 +72,7 @@ print(rinko_xls_files)
 # loops through all the excel files, applies remove_outliers_column to the columns with variables, (depth, salinity, do, etc)
 # which are then bound together, then bound with the sample id columns (date, sample)
 # this is then written as an excel file, placed under in a separate folder called: rinko_outliers_removed.
+
 for (xls in rinko_xls_files){
   xls_file <- read_excel(xls, col_names = TRUE)
   # print(nrow(xls_file))

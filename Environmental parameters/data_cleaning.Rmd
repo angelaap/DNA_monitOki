@@ -204,8 +204,7 @@ all_outliers_removed <- sapply(rinko_csv_no_outliers, readBind, simplify=FALSE) 
 
 # for some reason needs to be a dataframe to write an excel file with row.names = FALSE
 write_all_out_removed <- as.data.frame(all_outliers_removed) 
-write.xlsx(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/sept_no_outliers.xls", 
-           colNames = TRUE, rowNames = FALSE)
+write.csv(write_all_out_removed, file = "~/Documents/GitHub/DNA_monitOki/Environmental parameters/sept_no_outliers.csv")
 
 View(all_outliers_removed)
 nrow(all_outliers_removed)
