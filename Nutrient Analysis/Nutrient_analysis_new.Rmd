@@ -188,12 +188,14 @@ Data distribution by site
 Most of outliers (i.e. values outside 1.5 times the interquartile range above the upper quartile and below the lower quartile (Q1 - 1.5 * IQR or Q3 + 1.5 * IQR) correspond to urban areas. By contrast, in rural areas many values are below the detection limit of the instrument or even lower. THose values were substituted by 0.
 
 ```{r violin general}
-
+microMtotal<- read.csv("~/Documents/GitHub/DNA_monitOki/Nutrient Analysis/microMtotal.csv")
+microMtotal<- microMtotal %>% 
+  mutate(TN = rowSums(across(c(NO3, NO2, NH4))))
 longdf <- microMtotal %>% gather(nutrient, conc, -c(Pk, ID.number, siteID, replicate, landuse, area, sitepos, dates, time, run.number))
 
 # New facet label names for nutrient variable
-nutrient.labs <- c("NH4+", "NO2-", "NO3-", "PO43-", "SiO2")
-names(nutrient.labs) <- c("NH4", "NO2", "NO3", "PO4", "SiO2")
+nutrient.labs <- c("NH4+", "NO2-", "NO3-", "PO43-", "SiO2", "TN")
+names(nutrient.labs) <- c("NH4", "NO2", "NO3", "PO4", "SiO2", "TN")
 
 # New facet label names for landuse variable
 landuse.labs <- c("Rural", "Urban")
@@ -297,8 +299,8 @@ seasonal<- longdf %>%
     summarize(Mean = mean(conc))
 
 # New facet label names for nutrient variable
-nutrient.labs <- c("NH4+", "NO2-", "NO3-", "PO43-", "SiO2")
-names(nutrient.labs) <- c("NH4", "NO2", "NO3", "PO4", "SiO2")
+nutrient.labs <- c("NH4+", "NO2-", "NO3-", "PO43-", "SiO2", "TN")
+names(nutrient.labs) <- c("NH4", "NO2", "NO3", "PO4", "SiO2", "TN")
 
 # New facet label names for landuse variable
 area.labs <- c("Tancha","Ogimi","Ginowan","Nago")
@@ -349,7 +351,7 @@ ribbonarea<- out %>%
     group_by(area, nutrient, dates, landuse) %>%
     summarize(Mean = mean(conc), sd=sd(conc))
 
-ggplot(ribbonarea, aes(x=dates, y=Mean, colour=area, fill=area)) +
+ggplot(ribbonarea, aes(x=dates, y=Mean, colour=area, fill=area, group = 1 )) +
            scale_colour_manual(values = c("#7F8E39", "#42858C", "#D33B44", "#1d3554"),
                        name="Area",
                        breaks=c("R1", "R2", "U1", "U2"),
