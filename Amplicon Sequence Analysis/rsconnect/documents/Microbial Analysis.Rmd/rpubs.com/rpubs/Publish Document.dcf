@@ -1,0 +1,11 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/939623/352008b650d44a2ab4e3b9d661d22b74
+bundleId: https://api.rpubs.com/api/v1/document/939623/352008b650d44a2ab4e3b9d661d22b74
+url: http://rpubs.com/angelaap/939623
+when: 1663806310.06746
+lastSyncTime: 1663806310.06747
