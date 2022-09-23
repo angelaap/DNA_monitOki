@@ -352,7 +352,7 @@ montlybarplotD1
 ## Alpha Diversity
 
 Richness estimate
-```{r}
+```{r richness estimate}
 alphazero<-  subset_samples(ps, LandUse == "R" | LandUse == "U")
 
 ad <- breakaway(alphazero)
@@ -372,6 +372,25 @@ LandUseAD <- ggplot(badf, aes(x=SS, y=estimate, fill = LandUse)) +  facet_grid(.
 LandUseAD
 ```
 
+Shannon index
+```{r shannon}
+
+sha <- sample_shannon(alphazero)
+
+shadiver<- summary(sha) %>%
+  add_column("Sample.ID" = alphazero %>% otu_table %>% sample_names)
+
+bad_sha<- merge(shadiver, metatable, by = "Sample.ID")
+
+#just comparing sampling sites
+sha_plot <- ggplot(bad_sha, aes(x=SS, y=estimate, fill = LandUse)) +  facet_grid(. ~ LandUse, scales="free" )+ geom_boxplot() + theme_bw() + theme(text = element_text(size=14)) +ylab("Shannon Index") +xlab("") + scale_fill_manual(values=c("#004488", "#D33B44"))+ theme(text = element_text(size=18)) + theme(legend.position="none")
+
+sha_plot
+
+sha_plot_month<- ggplot(bad_sha, aes(x=SS, y=estimate, fill = LandUse)) +  facet_grid(. ~ Month, scales="free" )+ geom_boxplot() + theme_bw() + theme(text = element_text(size=14)) +ylab("Shannon Index") +xlab("") + scale_fill_manual(values=c("#004488", "#D33B44"))+ theme(text = element_text(size=18)) + theme(legend.position="none")
+
+sha_plot_month
+```
 ## Ordination and distance
 
 We calculate the Atchison Distance
