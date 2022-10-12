@@ -27,7 +27,7 @@ library(ggfortify)
 
 Kenneth Dudley downloaded the data from [JMA](https://www.jma.go.jp/jma/indexe.html). This is 10 min data.
 Here is a map with the weather stations in Okinawa
-![](map.png")
+![](map.png)
 
 ```{r getting data and cleaning}
 rawind<- read.csv("~/Documents/Projects OIST/RS/DNA year monitoring project/Raw_rain_wind/RainWind_10min_2020_Nov_to_2021_Oct.csv")
