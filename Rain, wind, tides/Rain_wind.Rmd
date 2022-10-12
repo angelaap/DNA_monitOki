@@ -1,0 +1,39 @@
+---
+title: "Rain, wind analysis_RSproject"
+author: "Angela Ares"
+date: '`r format(Sys.Date(), "%b %d, %Y")`'
+output:
+  html_document:
+    toc: true
+    theme: cosmo
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE)
+```
+
+
+Loading packages
+```{r packages, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(jcolors)
+library(ggfortify)
+```
+
+## Getting rain and wind data and cleaning
+
+Kenneth Dudley downloaded the data from [JMA](https://www.jma.go.jp/jma/indexe.html). This is 10 min data.
+Here is a map with the weather stations in Okinawa
+![](map.png")
+
+```{r getting data and cleaning}
+rawind<- read.csv("~/Documents/Projects OIST/RS/DNA year monitoring project/Raw_rain_wind/RainWind_10min_2020_Nov_to_2021_Oct.csv")
+
+#separar columna date y hora en dos (o anadirlas)
+#cumulative per day
+#make line plot
+
+#try to do the cummulative with real sampling data
