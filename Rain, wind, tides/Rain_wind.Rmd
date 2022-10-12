@@ -21,19 +21,32 @@ library(ggplot2)
 library(tidyverse)
 library(jcolors)
 library(ggfortify)
+library(lubridate)
 ```
 
 ## Getting rain and wind data and cleaning
 
 Kenneth Dudley downloaded the data from [JMA](https://www.jma.go.jp/jma/indexe.html). This is 10 min data.
-Here is a map with the weather stations in Okinawa
+Here is a map with the weather stations in Okinawa also made by Kenneth.
+
 ![](map.png)
 
 ```{r getting data and cleaning}
+
 rawind<- read.csv("~/Documents/Projects OIST/RS/DNA year monitoring project/Raw_rain_wind/RainWind_10min_2020_Nov_to_2021_Oct.csv")
+sumrain<- rawind %>% 
+  mutate(dates = ymd_hms(eventDate),
+         day = date(dates)) %>% 
+  group_by(day, site_id_en) %>% 
+  summarise(acc_Rain = sum(precipitation_mm))
 
-#separar columna date y hora en dos (o anadirlas)
-#cumulative per day
-#make line plot
+#some stations dont have rain data so it is better to remove them
+#lets make a lineplot with accumulated rain per day and site 
 
-#try to do the cummulative with real sampling data
+rainplot<- ggplot(sumrain, aes(x=day)) + 
+  geom_line(aes(y=acc_Rain), size=0.5, color="#D33B44")+
+  scale_y_continuous(name = "Accumulated rain (mm)")+ 
+  facet_wrap(~site_id_en)+ 
+  theme_bw()
+
+```
