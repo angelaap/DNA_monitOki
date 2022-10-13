@@ -30,8 +30,8 @@ Kenneth Dudley downloaded the data from [JMA](https://www.jma.go.jp/jma/indexe.h
 Here is a map with the weather stations in Okinawa also made by Kenneth.
 
 ![](map.png)
-
-```{r getting data and cleaning}
+Big rain events seems
+```{r getting data and cleaning rain}
 
 rawind<- read.csv("~/Documents/Projects OIST/RS/DNA year monitoring project/Raw_rain_wind/RainWind_10min_2020_Nov_to_2021_Oct.csv")
 sumrain<- rawind %>% 
@@ -41,12 +41,52 @@ sumrain<- rawind %>%
   summarise(acc_Rain = sum(precipitation_mm))
 
 #some stations dont have rain data so it is better to remove them
+
+new_sumrain<- sumrain[!grepl("Naha|Nago", sumrain$site_id_en),]
+
+
 #lets make a lineplot with accumulated rain per day and site 
 
-rainplot<- ggplot(sumrain, aes(x=day)) + 
-  geom_line(aes(y=acc_Rain), size=0.5, color="#D33B44")+
+rainplot<- ggplot(new_sumrain, aes(x=day)) + 
+  geom_line(aes(y=acc_Rain), size=0.5, color="black")+
   scale_y_continuous(name = "Accumulated rain (mm)")+ 
-  facet_wrap(~site_id_en)+ 
+  facet_grid(site_id_en ~ .)+ 
   theme_bw()
 
+rainplot
+```
+
+
+Lets see the wind intensity
+```{r EDA wind}
+
+meanwind<- rawind %>% 
+  mutate(dates = ymd_hms(eventDate),
+         day = date(dates)) %>% 
+  group_by(day, site_id_en) %>% 
+  summarise(mean_wind = mean(windAvgSpeed_ms))
+  
+meanmaxwind<- rawind %>% 
+  mutate(dates = ymd_hms(eventDate),
+         day = date(dates)) %>% 
+  group_by(day, site_id_en) %>% 
+  summarise(mean_maxwind = mean(windMaxSpeed_ms))
+  
+windy <- left_join(meanwind, meanmaxwind, by=c('day', 'site_id_en'))
+
+#some stations dont have rain data so it is better to remove them
+
+windytot<- windy[!grepl("Goya|Yomitan|Kuniga", sumrain$site_id_en),]
+
+
+#lets make a lineplot with accumulated rain per day and site 
+
+windplot<- ggplot(windytot, aes(x=day)) + 
+  geom_line(aes(y=mean_wind), size=0.5, color="black")+
+  geom_line(aes(y=mean_maxwind), size=0.5, color="red")+
+  scale_y_continuous(name = "Wind intensity (m/s)")+ 
+  facet_grid(site_id_en ~ .)+ 
+  theme_bw()
+
+windplot
 ```
