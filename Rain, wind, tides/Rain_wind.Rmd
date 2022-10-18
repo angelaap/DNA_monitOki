@@ -34,8 +34,8 @@ Here is a map with the weather stations in Okinawa also made by Kenneth.
 ![](map.png)
 Big rain events seems
 ```{r getting data and cleaning rain}
-
-rawind<- read.csv("~/Documents/Projects OIST/RS/DNA year monitoring project/Raw_rain_wind/RainWind_10min_2020_Nov_to_2021_Oct.csv")
+setwd("~/Documents/GitHub/DNA_monitOki/Rain, wind, tides")
+rawind<- read.csv("RainWind_10min_2020_Nov_to_2021_Oct.csv")
 sumrain<- rawind %>% 
   mutate(dates = ymd_hms(eventDate),
          day = date(dates)) %>% 
@@ -80,10 +80,12 @@ windy <- left_join(meanwind, meanmaxwind, by=c('day', 'site_id_en'))
 
 windytot<- windy[!grepl("Goya|Yomitan|Kuniga", sumrain$site_id_en),]
 
+windytot <- windytot %>%
+  rename(date = day)
 
 #lets make a lineplot with accumulated rain per day and site 
 
-windplot<- ggplot(windytot, aes(x=day)) + 
+windplot<- ggplot(windytot, aes(x=date)) + 
   geom_line(aes(y=mean_wind), size=0.5, color="black")+
   geom_line(aes(y=mean_maxwind), size=0.5, color="grey")+
   scale_y_continuous(name = "Wind intensity (m/s)")+ 
@@ -162,19 +164,76 @@ mean_sd_rinko<- mean_sd_rinko %>%
 
 #now we join the rain data
 df.wide <- pivot_wider(new_sumrain, names_from = site_id_en, values_from = acc_Rain)
-df.wide$date <- ymd(df.wide $day)
+df.wide$date <- ymd(df.wide$day)
 
 #join tables
-rainrinko<- mean_sd_rinko %>%
-  full_join(df.wide, by = 'date', keep = TRUE)
+#Rain
 
-#plot rain accumulation vs environmental parameters
+rainrinko<- mean_sd_rinko %>%
+  full_join(df.wide, by = "date", keep = TRUE) 
+rainrinko$date<- rainrinko$date.x
+
+#Wind
+windymean<- windytot[ , -c(4)]
+windymean<- pivot_wider(windymean, names_from = site_id_en, values_from = mean_wind)
+windydata<- rainrinko %>%
+  full_join(windymean, by = "date", keep = TRUE)
+
+#Nutrients
+#get csv from nutrients folder
+nutrients <- read.csv("~/Documents/GitHub/DNA_monitOki/Nutrient Analysis/microMtotal.csv")
+mean_sd_nutrientes<- nutrients %>%
+  group_by(dates, siteID) %>%
+  summarise(across(
+    .cols = is.numeric, 
+    .fns = list(Mean = mean, SD = sd), na.rm = TRUE, 
+    .names = "{col}_{fn}"
+    ))
+nutrientsclean<- mean_sd_nutrientes[ , -c(3:12)]
+windydata$date<- windydata$date.x
+nutrientsclean$date<- nutrientsclean$dates
+nutrientsclean$sample<- nutrientsclean$siteID
+nutrientsclean$date<- ymd(nutrientsclean$date)
+nutrientdata<- windydata %>%
+  full_join(nutrientsclean, by = c("date", "sample"), keep = TRUE)
+  
+#clean table
+#remove columns
+
+allles<- nutrientdata[ , -c(5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 24, 26, 30:32, 35, 36, 39, 41, 43, 45, 47, 48, 49, 50)]
+all<- allles[complete.cases(allles), ]
+
+sp <- ggscatter(all, x = "Yomitan", y = "tur_range_Mean",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+   )
+# Add correlation coefficient
+sp + stat_cor(method = "pearson", label.x = 3, label.y = 30)
+#> `geom_smooth()` using formula 'y ~ x'
 
 
 
 ```
 
 
+Plots of time change
+
+```{r}
+#plot rain accumulation vs environmental parameters
+
+coeff= 1
+plotrain_rinko<- ggplot(rainrinko, aes(date.x))+ 
+  geom_point(aes(y=salinity_Mean))+
+  geom_line(aes(y=Goya), size=0.5, color="#D33B44")+
+  scale_y_continuous(name = "Salinity",sec.axis = sec_axis( trans=~.*coeff, name="Cummulative rain (mm)"))
+
++ 
+  facet_wrap(~event)+ 
+  theme_bw()
+
+plotrain_rinko
+```
 
 
 
