@@ -56,6 +56,49 @@ rainplot<- ggplot(new_sumrain, aes(x=day)) +
   theme_bw()
 
 rainplot
+
+#lets check 2022
+
+rawind22<- read.csv("JMABacteria_2021-09_2022-09.csv")
+sumrain22<- rawind22 %>% 
+  mutate(dates = ymd_hms(eventDate),
+         day = date(dates)) %>% 
+  group_by(day, site_id_en) %>% 
+  summarise(acc_Rain = sum(precipitation_mm))
+
+#some stations dont have rain data so it is better to remove them
+
+new_sumrain22<- sumrain22[!grepl("Naha|Nago", sumrain22$site_id_en),]
+
+
+#lets make a lineplot with accumulated rain per day and site 
+
+rainplot2022<- ggplot(new_sumrain22, aes(x=day)) + 
+  geom_line(aes(y=acc_Rain), size=0.5, color="black")+
+  scale_y_continuous(name = "Accumulated rain (mm)")+ 
+  facet_grid(site_id_en ~ .)+ 
+  theme_bw()
+
+rainplot2022
+
+
+#with all the rain data with rain each 10 min
+
+daterain<- rawind %>% 
+  mutate(dates = ymd_hms(eventDate))%>%
+  group_by(dates, site_id_en) %>% 
+  summarise(acc_Rain = sum(precipitation_mm))
+
+new_daterain<- daterain[!grepl("Naha|Nago", daterain$site_id_en),]
+
+raindata10<- ggplot(new_daterain, aes(x=dates)) + 
+  geom_line(aes(y=acc_Rain), size=0.5, color="black")+
+  scale_y_continuous(name = "Accumulated rain (mm)")+ 
+  facet_grid(site_id_en ~ .)+ 
+  theme_bw()
+
+raindata10
+
 ```
 
 
@@ -203,19 +246,70 @@ nutrientdata<- windydata %>%
 allles<- nutrientdata[ , -c(5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 24, 26, 30:32, 35, 36, 39, 41, 43, 45, 47, 48, 49, 50)]
 all<- allles[complete.cases(allles), ]
 
-sp <- ggscatter(all, x = "Yomitan", y = "tur_range_Mean",
-   add = "reg.line",  # Add regressin line
-   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
-   conf.int = TRUE # Add confidence interval
-   )
-# Add correlation coefficient
-sp + stat_cor(method = "pearson", label.x = 3, label.y = 30)
-#> `geom_smooth()` using formula 'y ~ x'
 
+#get tide data
+
+tide <- read.csv("~/Documents/GitHub/DNA_monitOki/Rain, wind, tides/jma_hourly_tidelevel.csv")
+
+#first we attach the tide data to Rinko to make the sampling dates the same
+
+rinkotimes<- rinko_join[ , -c(1, 2, 4)]
+rinkotimes<-rinkotimes %>% unite('totaltime', c(date,time), remove = FALSE)
+rinkotimes$totaltime<- parse_date_time(rinkotimes$totaltime, "YmdHMS") 
+horas<- hour(rinkotimes$totaltime)
+todohoras<- cbind(rinkotimes, horas)
+
+#mean value
+mean<- todohoras %>%
+  group_by(date, sample, horas) %>%
+  summarise(across(
+    .cols = is.numeric, 
+    .fns = list(Mean = mean), na.rm = TRUE, 
+    .names = "{col}_{fn}"
+    ))
+
+#substitute strings with different patterns
+#in the location column
+
+
+#in the sample column
+mean$sample<- gsub('Ｒ１Ｃ', 'R1C',
+           gsub('Ｒ１Ｎ', 'R1N',
+           gsub('Ｒ１Ｓ', 'R1S', 
+           gsub('Ｒ２Ｃ', 'R2C', 
+           gsub('Ｒ２Ｎ', 'R2N', 
+           gsub('Ｒ２Ｓ', 'R2S',       
+           gsub('Ｕ１Ｃ', 'U1C', 
+           gsub('Ｕ１Ｎ', 'U1N',
+           gsub('Ｕ１Ｓ', 'U1S',
+           gsub('Ｕ２Ｃ', 'U2C',
+           gsub('Ｕ２Ｎ', 'U2N',
+           gsub('Ｕ２Ｓ', 'U2S', mean$sample))))))))))))
+
+
+#prepare tide data
+
+#tide$Date.time<- as.character(tide$Date.time)
+trial<- tide
+tri<- trial %>%
+  mutate(across('Date.time', str_replace, '/', '-'),
+  mutate(across('Date.time', str_replace, '/', '-')))
+tri$Date.time<-parse_date_time(tri$Date.time, "ymd HM")
+tri$Date.time<- as.character(tri$Date.time)
+
+
+ 
 
 
 ```
 
+correlation matrix
+```{r}
+corrmatrix<- all[ , -c(1, 2, 3, 14, 20)] #leave only numeric col
+res <- cor(corrmatrix) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
+
+```
 
 Plots of time change
 
@@ -233,6 +327,19 @@ plotrain_rinko<- ggplot(rainrinko, aes(date.x))+
   theme_bw()
 
 plotrain_rinko
+
+#correlation plots
+sp <- ggscatter(all, x = "Yomitan", y = "tur_range_Mean",
+   add = "reg.line",  # Add regressin line
+   add.params = list(color = "blue", fill = "lightgray"), # Customize reg. line
+   conf.int = TRUE # Add confidence interval
+   )
+# Add correlation coefficient
+sp + stat_cor(method = "pearson", label.x = 3, label.y = 30)
+
+#> `geom_smooth()` using formula 'y ~ x'
+
+
 ```
 
 

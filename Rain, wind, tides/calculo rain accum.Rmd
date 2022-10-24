@@ -1,0 +1,93 @@
+---
+title: "rain caos"
+date: '`r format(Sys.Date(), "%b %d, %Y")`'
+output:
+  html_document:
+    toc: true
+    theme: cosmo
+  word_document: default
+  pdf_document: default
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE)
+```
+
+
+Loading packages
+```{r packages, include=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(jcolors)
+library(ggfortify)
+library(lubridate)
+```
+
+```{r}
+new_daterain #rain data each 10 min
+class(new_daterain$dates)
+#select each of the places in different df
+Goyarain<- new_daterain %>% filter(grepl('Goya', site_id_en))
+Kuniyarain<- new_daterain %>% filter(grepl('Kuniya', site_id_en))
+Yomitanrain<- new_daterain %>% filter(grepl('Yomitan', site_id_en))
+
+#on the other hand we have mean that includes rinkodata values.
+rinkotimes
+class(rinkotimes$totaltime)
+aproh<- as.character(rinkotimes$totaltime)
+aproxh<- ymd_hms(aproh)
+aproxh<- floor_date(aproxh, unit = "hour")
+aproxh<- as.character(aproxh)
+joinaprox<- cbind(rinkotimes, aproxh)
+joinaprox<- joinaprox[ , -c(1, 2, 4)]
+  
+#mean value
+meanrinko<- joinaprox %>%
+  group_by(aproxh, sample) %>%
+  summarise(across(
+    .cols = is.numeric, 
+    .fns = list(Mean = mean), na.rm = TRUE, 
+    .names = "{col}_{fn}"
+    ))
+
+# Compute the mean of multiple columns
+df2 <- joinaprox %>% group_by(aproxh, sample) %>% 
+  summarise(mean_salary=mean(salinity),
+            mean_bonus= mean(water_temp),
+            .groups = 'drop', na.rm = TRUE) %>%
+  as.data.frame()
+
+# Compute the mean of multiple columns
+df2 <- joinaprox %>% group_by(aproxh, sample) %>% 
+  summarise(across(where(is.numeric), ~ mean(.x, na.rm = TRUE))) %>%
+  as.data.frame()
+
+df2$sample<- gsub('Ｒ１Ｃ', 'R1C',
+           gsub('Ｒ１Ｎ', 'R1N',
+           gsub('Ｒ１Ｓ', 'R1S', 
+           gsub('Ｒ２Ｃ', 'R2C', 
+           gsub('Ｒ２Ｎ', 'R2N', 
+           gsub('Ｒ２Ｓ', 'R2S',       
+           gsub('Ｕ１Ｃ', 'U1C', 
+           gsub('Ｕ１Ｎ', 'U1N',
+           gsub('Ｕ１Ｓ', 'U1S',
+           gsub('Ｕ２Ｃ', 'U2C',
+           gsub('Ｕ２Ｎ', 'U2N',
+           gsub('Ｕ２Ｓ', 'U2S', df2$sample))))))))))))
+
+```
+
+```{r, loop 12h}
+df2$aproxh<- df2$dates
+df = merge(x=df2,y=Goyarain,by="dates",all=TRUE)
+
+df$time<- ymd_hms(df$dates)
+
+
+
+
+
+```
+
