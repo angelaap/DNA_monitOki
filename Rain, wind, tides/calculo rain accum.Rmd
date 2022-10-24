@@ -42,15 +42,6 @@ aproxh<- floor_date(aproxh, unit = "hour")
 aproxh<- as.character(aproxh)
 joinaprox<- cbind(rinkotimes, aproxh)
 joinaprox<- joinaprox[ , -c(1, 2, 4)]
-  
-#mean value
-meanrinko<- joinaprox %>%
-  group_by(aproxh, sample) %>%
-  summarise(across(
-    .cols = is.numeric, 
-    .fns = list(Mean = mean), na.rm = TRUE, 
-    .names = "{col}_{fn}"
-    ))
 
 # Compute the mean of multiple columns
 df2 <- joinaprox %>% group_by(aproxh, sample) %>% 
@@ -77,17 +68,32 @@ df2$sample<- gsub('Ｒ１Ｃ', 'R1C',
            gsub('Ｕ２Ｎ', 'U2N',
            gsub('Ｕ２Ｓ', 'U2S', df2$sample))))))))))))
 
+
 ```
 
 ```{r, loop 12h}
-df2$aproxh<- df2$dates
+df2$dates<- df2$aproxh
 df = merge(x=df2,y=Goyarain,by="dates",all=TRUE)
 
-df$time<- ymd_hms(df$dates)
+for (i in 1:nrow(df)){
+  if df$depth!=NA{
+    df$sums <- rollsumr(df$acc_Rain, k = 72, fill = NA)
+  }
+  else {
+    is.na(df$sums)
+  }
+}
 
 
+for (i in 1:nrow(df)){
+    df$sums <- rollsumr(df$acc_Rain, k = 72, fill = NA)
+}
 
 
+while(df$depth!=NA) {          # Start while-loop
+  data3[ , i] <- data3[ , i] + 100
+  i <- i + 1
+}
 
 ```
 
