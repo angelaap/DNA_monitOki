@@ -297,15 +297,15 @@ tri<- trial %>%
 tri$Date.time<-parse_date_time(tri$Date.time, "ymd HM")
 tri$Date.time<- as.character(tri$Date.time)
 
-
- 
-
-
+tri$date<- tri$Date.time
+all$date<-all$date.x
+tidefull = merge(x=all,y=tri,by="date",all=TRUE)
+complete<- tidefull[complete.cases(tidefull), ]
 ```
 
 correlation matrix
 ```{r}
-corrmatrix<- all[ , -c(1, 2, 3, 14, 20)] #leave only numeric col
+corrmatrix<- tidefull[ , -c(1, 2, 3, 4, 15, 21, 27:29)] #leave only numeric col
 res <- cor(corrmatrix) #get the cor matrix
 corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
 
