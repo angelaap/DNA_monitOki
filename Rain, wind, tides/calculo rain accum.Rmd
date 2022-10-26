@@ -26,12 +26,21 @@ library(lubridate)
 ```
 
 ```{r}
-new_daterain #rain data each 10 min
-class(new_daterain$dates)
+new_Date<-new_daterain#rain data each 10 min
+class(new_Date$dates)
+new_Date$dates<- as.character(new_Date$dates)
+new_Date$aproxh.x<- new_Date$dates
+rain.wide <- pivot_wider(new_Date, names_from = site_id_en, values_from = acc_Rain)
+
+#now calculate previous 12 hours
+rain.wide$sumsGoya12 <- rollsumr(rain.wide$Goya, k = 72, fill = NA)
+rain.wide$sumsKuniga12 <- rollsumr(rain.wide$Kuniga, k = 72, fill = NA)
+rain.wide$sumsYomitan12<- rollsumr(rain.wide$Yomitan, k = 72, fill = NA)
+
 #select each of the places in different df
-Goyarain<- new_daterain %>% filter(grepl('Goya', site_id_en))
-Kuniyarain<- new_daterain %>% filter(grepl('Kuniya', site_id_en))
-Yomitanrain<- new_daterain %>% filter(grepl('Yomitan', site_id_en))
+#Goyarain<- new_daterain %>% filter(grepl('Goya', site_id_en))
+#Kuniyarain<- new_daterain %>% filter(grepl('Kuniya', site_id_en))
+#Yomitanrain<- new_daterain %>% filter(grepl('Yomitan', site_id_en))
 
 #on the other hand we have mean that includes rinkodata values.
 rinkotimes
@@ -45,8 +54,8 @@ joinaprox<- joinaprox[ , -c(1, 2, 4)]
 
 # Compute the mean of multiple columns
 df2 <- joinaprox %>% group_by(aproxh, sample) %>% 
-  summarise(mean_salary=mean(salinity),
-            mean_bonus= mean(water_temp),
+  summarise(sal=mean(salinity),
+            temp= mean(water_temp),
             .groups = 'drop', na.rm = TRUE) %>%
   as.data.frame()
 
@@ -68,32 +77,63 @@ df2$sample<- gsub('Ｒ１Ｃ', 'R1C',
            gsub('Ｕ２Ｎ', 'U2N',
            gsub('Ｕ２Ｓ', 'U2S', df2$sample))))))))))))
 
+df2$dates<- df2$aproxh
+df2$dates<-gsub(" .*","", df2$dates)
+
+#tides
+tide <- read.csv("~/Documents/GitHub/DNA_monitOki/Rain, wind, tides/jma_hourly_tidelevel.csv")
+trial<- tide
+tri<- trial %>%
+  mutate(across('Date.time', str_replace, '/', '-'),
+  mutate(across('Date.time', str_replace, '/', '-')))
+tri$Date.time<-parse_date_time(tri$Date.time, "ymd HM")
+tri$aproxh<- as.character(tri$Date.time)
+head(tri)
+tri$Date.time<- tri$aproxh
+
+#nutrient data does not have the time. Therefore makes more challenging the full join. We take the df "nutrientdata" from the Rain_wind Rmarkdown which contains same data but only for dates (not times included). This df also includes average wind data
+
+head(nutrientdata)
+
+
+#first we need to clean the table
+newnutrient<- nutrientdata[, -grep("_SD", colnames(nutrientdata))]
+data.frame(colnames(newnutrient)) #to know the number of columns
+newnutrients<- newnutrient[ , -c(17:19)]
+newnutrients$dates<- newnutrient$date.x
+newnutrients$dates<- as.character(newnutrients$dates)
 
 ```
 
-```{r, loop 12h}
-df2$dates<- df2$aproxh
-df = merge(x=df2,y=Goyarain,by="dates",all=TRUE)
+Lets put all together
+```{r}
 
-for (i in 1:nrow(df)){
-  if df$depth!=NA{
-    df$sums <- rollsumr(df$acc_Rain, k = 72, fill = NA)
-  }
-  else {
-    is.na(df$sums)
-  }
-}
+Full<- df2 %>%
+  full_join(newnutrients, by = "dates", keep = TRUE) %>%
+  full_join(tri, by ="aproxh", keep = TRUE) %>%
+  full_join(rain.wide, by ="aproxh.x", keep = TRUE)
+#clean from extra columns
+newfull<- Full[ , -c(3, 17, 20, 21:36, 39, 40, 41, 47, 48, 49, 51, 52, 53, 54, 55, 56)]
+
+#reorder and rename columns
+names(newfull)[1] <- "date_time"
+names(newfull)[25] <- "tide"
+names(newfull)[18] <- "wind_Nago"
+names(newfull)[19] <- "wind_Naha"
+colnames(newfull)<-gsub("_Mean","",colnames(newfull))
 
 
-for (i in 1:nrow(df)){
-    df$sums <- rollsumr(df$acc_Rain, k = 72, fill = NA)
-}
+#cleanfull <- newfull[, c(1, 17, 2, 18, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32)]
+#this contains all the data to be correlated. 
+#remove the non numeric columns
 
+numeric<- newfull[ , -c(1, 2, 16, 17)]
 
-while(df$depth!=NA) {          # Start while-loop
-  data3[ , i] <- data3[ , i] + 100
-  i <- i + 1
-}
+```
 
+```{r, correlation}
+numeric<- numeric[complete.cases(numeric), ]#keep only rows with data in all the cases
+res <- cor(numeric) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
 ```
 
