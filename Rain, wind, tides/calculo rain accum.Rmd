@@ -33,10 +33,10 @@ new_Date$dates<- as.character(new_Date$dates)
 new_Date$aproxh.x<- new_Date$dates
 rain.wide <- pivot_wider(new_Date, names_from = site_id_en, values_from = acc_Rain)
 
-#now calculate previous 12 hours
-rain.wide$sumsGoya12 <- rollsumr(rain.wide$Goya, k = 144, fill = NA)
-rain.wide$sumsKuniga12 <- rollsumr(rain.wide$Kuniga, k = 144, fill = NA)
-rain.wide$sumsYomitan12<- rollsumr(rain.wide$Yomitan, k = 144, fill = NA)
+#now calculate previous 24 hours
+rain.wide$sumsGoya <- rollsumr(rain.wide$Goya, k = 144, fill = NA)
+rain.wide$sumsKuniga <- rollsumr(rain.wide$Kuniga, k = 144, fill = NA)
+rain.wide$sumsYomitan<- rollsumr(rain.wide$Yomitan, k = 144, fill = NA)
 
 #select each of the places in different df
 #Goyarain<- new_daterain %>% filter(grepl('Goya', site_id_en))
@@ -145,7 +145,7 @@ There is not much correlation between rain and different physicochemical paramet
 ```{r, better rain, wind aprox}
 
 U1rain<- Full %>% 
- filter(!grepl("U1",sample))
+ filter(grepl("U1",sample))
 U1rain<- U1rain[ , c(1, 2, 19, 57)]
 names(U1rain)[4] <- "Rain_Acc12h"
 
@@ -169,7 +169,7 @@ totalrain<- totalrain[complete.cases(totalrain), ]
 
 #now wind
 U1wind<- Full %>% 
- filter(!grepl("U1",sample))
+ filter(location == "U1")
 U1wind<- U1wind[ , c(1, 2, 19, 38)]
 names(U1wind)[4] <- "Wind"
 
@@ -202,4 +202,69 @@ numeric_accurate<- rain_wind[ , -c(1, 2, 10, 11, 12, 13, 20, 21, 22, 23, 25)]
 res <- cor(numeric_accurate) #get the cor matrix
 corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
 ```
+```{r}
+corrplot.mixed(res, order = 'AOE')
+```
+```{r}
+corrplot(res, order = 'hclust', addrect = 2)
+```
 
+Only U sites
+
+```{r}
+
+rain_wind<- rain_wind[complete.cases(rain_wind), ]
+Urain_wind<- rain_wind %>% 
+ filter(grepl("U",location.x))
+numeric_accurateU<- Urain_wind[ , -c(1, 2, 10, 11, 12, 13, 20, 21, 22, 23, 25)]
+res <- cor(numeric_accurateU) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
+```
+
+```{r}
+
+rain_wind<- rain_wind[complete.cases(rain_wind), ]
+Rrain_wind<- rain_wind %>% 
+ filter(grepl("R",location.x))
+numeric_accurateR<- Rrain_wind[ , -c(1, 2, 10, 11, 12, 13, 20, 21, 22, 23, 25)]
+res <- cor(numeric_accurateR) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
+```
+```{r}
+U1rain_wind<- rain_wind%>% 
+  filter(grepl("U1", sample))
+U1rain_wind<- U1rain_wind[complete.cases(U1rain_wind), ]
+numeric_accurateU1<- U1rain_wind[ , -c(1, 2, 10, 11, 12, 13, 20, 21, 22, 23, 25)]
+numeric_accurateU1$tide<- as.numeric(numeric_accurateU1$tide)
+res <- cor(numeric_accurateU1) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
+```
+```{r}
+U2rain_wind<- rain_wind%>% 
+  filter(grepl("U2", sample))
+U2rain_wind<- U2rain_wind[complete.cases(U2rain_wind), ]
+numeric_accurateU2<- U2rain_wind[ , -c(1, 2, 10, 11, 12, 13, 20, 21, 22, 23, 25)]
+numeric_accurateU2$tide<- as.numeric(numeric_accurateU2$tide)
+res <- cor(numeric_accurateU2) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
+```
+```{r}
+R1rain_wind<- rain_wind%>% 
+  filter(grepl("R1", sample))
+R1rain_wind<- R1rain_wind[complete.cases(R1rain_wind), ]
+numeric_accurateR1<- R1rain_wind[ , -c(1, 2, 10, 11, 12, 13, 20, 21, 22, 23, 25)]
+numeric_accurateR1$tide<- as.numeric(numeric_accurateR1$tide)
+res <- cor(numeric_accurateR1) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
+```
+
+```{r}
+R2rain_wind<- rain_wind%>% 
+  filter(grepl("R2", sample))
+R2rain_wind<- R2rain_wind[complete.cases(R2rain_wind), ]
+numeric_accurateR2<- R2rain_wind[ , -c(1, 2, 10, 11, 12, 13, 20, 21, 22, 23, 25)]
+numeric_accurateR2$tide<- as.numeric(numeric_accurateR2$tide)
+res <- cor(numeric_accurateR2) #get the cor matrix
+corrplot(res, type = "upper", order = "hclust", tl.col = "black", tl.srt = 45) # correlation plot
+```
+Correlation of R2 makes much more sense. It correlates positively with turbidity and somewhow rain and negatively with temperature and conductivity. We also get a positive correlation with tides (?). See if this makes sense at all.
